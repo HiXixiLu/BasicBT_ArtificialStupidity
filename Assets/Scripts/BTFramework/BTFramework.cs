@@ -148,13 +148,13 @@ namespace BTFramework {
         public Condtion()
         {
             nodeType = NodeType.Condition;
-            children = new List<BaseNode>();
+            children = null;
         }
 
         public Condtion(ConditionDelegation delegation)
         {
             nodeType = NodeType.Condition;
-            children = new List<BaseNode>();
+            children = null;
             detailCondition = delegation;
         }
 
@@ -190,12 +190,12 @@ namespace BTFramework {
         {
             nodeType = NodeType.Action;
             detailAction = delegation;
-            children = new List<BaseNode>();
+            children = null;
         }
         public Action()
         {
             nodeType = NodeType.Action;
-            children = new List<BaseNode>();
+            children = null;
         }
 
         public override ResultType Execute()
