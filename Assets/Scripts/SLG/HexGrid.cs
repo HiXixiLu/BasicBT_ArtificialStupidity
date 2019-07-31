@@ -16,7 +16,7 @@ public class HexGrid : MonoBehaviour
     HexMesh hexMesh;
 
     public Color defaultColor = Color.white;
-    public Color touchedColor = Color.magenta;
+    //public Color touchedColor = Color.magenta;
 
     private void Awake()
     {
@@ -47,32 +47,69 @@ public class HexGrid : MonoBehaviour
         cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
         cell.color = defaultColor;
 
+        // 自西向东添加东西方向的邻居
+        if (x > 0) {
+            cell.SetNeighbors(HexDirections.W, cells[i - 1]);
+        }
+
+        // 自北向南添加邻居 —— 由于Z方向的之字布局，偶数行与奇数行要区别对待
+        if (z > 0) {
+            if ((z & 1) == 0)
+            { 
+                // even rows
+                cell.SetNeighbors(HexDirections.SE, cells[i - width]);
+                if (x > 0) {
+                    cell.SetNeighbors(HexDirections.SW, cells[i - width - 1]);
+                }
+            }
+            else {
+                // odd rows
+                cell.SetNeighbors(HexDirections.SW, cells[i - width]);
+                if (x > 0) {
+                    cell.SetNeighbors(HexDirections.SE, cells[i - width + 1]);
+                }
+            }
+        }
+
         Text label = Instantiate<Text>(HexCellText);
         label.rectTransform.SetParent(gridCanvas.transform, false);
         label.rectTransform.anchoredPosition = new Vector2(position.x, position.z);
         label.text = cell.coordinates.ToStringOnSeparateLines();
     }
 
-    private void Update()
+    //private void Update()
+    //{
+    //    if (Input.GetMouseButtonDown(0)) {  //每帧调用的 Input类 API注意甄别检测区别
+    //        HandleInput();
+    //    }
+    //}
+    //void HandleInput() {
+    //    Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);   // Ray 是射线，两种属性可诠释（origin, direction）
+    //    RaycastHit hit;
+    //    if (Physics.Raycast(inputRay, out hit)) {
+    //        TouchCell(hit.point);
+    //    }
+    //}
+    //void TouchCell(Vector3 position)
+    //{
+    //    position = transform.InverseTransformPoint(position);   // transform position from world space to local space.
+    //    HexCoordinates coordinates = HexCoordinates.FromPosition(position);
+    //    Debug.Log("touched at " + coordinates.ToString());
+    //    int index = coordinates.X + coordinates.Z * width + coordinates.Z / 2;  // 往z轴正向的格子，x坐标有偏移需要修正
+    //    HexCell cell = cells[index];
+    //    cell.color = touchedColor;
+    //    hexMesh.Triangulate(cells);
+    //}
+
+    // 变色改从外部传入
+    public void ColorCell(Vector3 position, Color color)
     {
-        if (Input.GetMouseButton(0)) {
-            HandleInput();
-        }
-    }
-    void HandleInput() {
-        Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-        if (Physics.Raycast(inputRay, out hit)) {
-            TouchCell(hit.point);
-        }
-    }
-    void TouchCell(Vector3 position) {
         position = transform.InverseTransformPoint(position);   // transform position from world space to local space.
         HexCoordinates coordinates = HexCoordinates.FromPosition(position);
         Debug.Log("touched at " + coordinates.ToString());
         int index = coordinates.X + coordinates.Z * width + coordinates.Z / 2;  // 往z轴正向的格子，x坐标有偏移需要修正
         HexCell cell = cells[index];
-        cell.color = touchedColor;
+        cell.color = color;
         hexMesh.Triangulate(cells);
     }
 }

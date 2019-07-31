@@ -5,8 +5,20 @@ using UnityEngine;
 public class HexCell : MonoBehaviour
 {
     public HexCoordinates coordinates;
-    public Color color;
+    public Color color; //仅仅以 HexCell 为单位记录颜色信息
+    [SerializeField]
+    HexCell[] neighbors;    //可动态地运算好并保存
+
+    public HexCell GetNeighbor(HexDirections direction) {
+        return neighbors[(int)direction];
+    }
+    public void SetNeighbors(HexDirections direction, HexCell cell) {
+        neighbors[(int)direction] = cell;
+        // 注意： 相邻关系是相互的
+        cell.neighbors[(int)direction.Opposite()] = this;
+    }
 }
+
 [System.Serializable]
 public struct HexCoordinates
 {
@@ -56,6 +68,8 @@ public struct HexCoordinates
     {
         return X.ToString() + "\n" + Y.ToString() + "\n" + Z.ToString();
     }
+
+    // 将射线检测点转换为单独的Hex中心点
     public static HexCoordinates FromPosition(Vector3 position)
     {
         float x = position.x / (HexMetrics.innerRadius * 2f);   // 确定一个点击位置属于哪个坐标
@@ -77,7 +91,7 @@ public struct HexCoordinates
             float dY = Mathf.Abs(y - iY);
             float dZ = Mathf.Abs(-x - y - iZ);
 
-            // 不需要修正 iY？
+            // 为什么不需要修正 iY？
             if (dX > dY && dX > dZ)
             {
                 iX = -iY - iZ;
@@ -89,5 +103,26 @@ public struct HexCoordinates
         }
 
         return new HexCoordinates(iX, iZ);
+    }
+}
+
+// 顶点朝上式摆放
+public enum HexDirections {
+    NE, E, SE, SW, W, NW
+}
+/* 对 HexDirection 的 Extension Method
+* An extension method is a static method inside a static class that behaves like an instance method of some type. 
+* That type could be anything, a class, an interface, a struct, a primitive value, or an enum
+*/
+public static class HexDirectionEctendions {
+
+    public static HexDirections Opposite(this HexDirections direction) {
+        return (int)direction < 3 ? (direction + 3) : (direction - 3);  //enum可以隐式转为int进行运算，但反过来不可以
+    }
+    public static HexDirections Previous(this HexDirections direction) {
+        return direction == HexDirections.NE ? HexDirections.NW : (direction - 1);
+    }
+    public static HexDirections Next(this HexDirections direction) {
+        return direction == HexDirections.NW ? HexDirections.NE : (direction + 1);
     }
 }
