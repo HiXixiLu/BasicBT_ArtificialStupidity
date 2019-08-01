@@ -47,7 +47,7 @@ public class HexGrid : MonoBehaviour
         cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
         cell.color = defaultColor;
 
-        // 自西向东添加东西方向的邻居
+        // 自东向西添加东西方向的邻居
         if (x > 0) {
             cell.SetNeighbors(HexDirections.W, cells[i - 1]);
         }
@@ -58,6 +58,7 @@ public class HexGrid : MonoBehaviour
             { 
                 // even rows
                 cell.SetNeighbors(HexDirections.SE, cells[i - width]);
+                // SE neighbors of even rows
                 if (x > 0) {
                     cell.SetNeighbors(HexDirections.SW, cells[i - width - 1]);
                 }
@@ -65,7 +66,8 @@ public class HexGrid : MonoBehaviour
             else {
                 // odd rows
                 cell.SetNeighbors(HexDirections.SW, cells[i - width]);
-                if (x > 0) {
+                // SE neighbors of odd row
+                if (x < width - 1) {
                     cell.SetNeighbors(HexDirections.SE, cells[i - width + 1]);
                 }
             }
