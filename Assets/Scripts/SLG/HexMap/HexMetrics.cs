@@ -10,6 +10,8 @@ public static class HexMetrics
     public const float solidFactor = 0.75f;
     public const float blendFactor = 1f - solidFactor;
 
+    public const float elevationStep = 5f;  // y轴上升单位
+
     // 顶点朝上的排列方式
     public static Vector3[] corners = {
         new Vector3(0f, 0f, outerRadius),

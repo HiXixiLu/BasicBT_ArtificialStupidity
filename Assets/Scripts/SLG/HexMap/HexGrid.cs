@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+/* HexGrid 是一个信息管理单元
+ * 管理渲染单元：绑定HexMesh这一GameObject，用于管理渲染单元
+ * 管理信息：保存着整个棋盘的长宽信息、保存信息单元数组 HexCell[]
+ * 管理UI单元：关联着 Canvas 对象
+ * 管理各种预制件的初始化： HexCell， _Prefab等
+ */
 public class HexGrid : MonoBehaviour
 {
     // 棋盘的长宽
@@ -15,8 +21,11 @@ public class HexGrid : MonoBehaviour
     Canvas gridCanvas;
     HexMesh hexMesh;
 
+    public PoliceDemo policePrefab;
+    public CitizenDemo citizenPrefab;
+    public EnemyDemo enemyPrefab;
+
     public Color defaultColor = Color.white;
-    //public Color touchedColor = Color.magenta;
 
     private void Awake()
     {
@@ -33,6 +42,7 @@ public class HexGrid : MonoBehaviour
     private void Start()
     {
         hexMesh.Triangulate(cells);
+        //CreatePolice(); //test only
     }
 
     void CreateCell(int x, int z, int i) {
@@ -77,41 +87,26 @@ public class HexGrid : MonoBehaviour
         label.rectTransform.SetParent(gridCanvas.transform, false);
         label.rectTransform.anchoredPosition = new Vector2(position.x, position.z);
         label.text = cell.coordinates.ToStringOnSeparateLines();
+        cell.uiRect = label.rectTransform;
     }
 
-    //private void Update()
-    //{
-    //    if (Input.GetMouseButtonDown(0)) {  //每帧调用的 Input类 API注意甄别检测区别
-    //        HandleInput();
-    //    }
-    //}
-    //void HandleInput() {
-    //    Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);   // Ray 是射线，两种属性可诠释（origin, direction）
-    //    RaycastHit hit;
-    //    if (Physics.Raycast(inputRay, out hit)) {
-    //        TouchCell(hit.point);
-    //    }
-    //}
-    //void TouchCell(Vector3 position)
-    //{
-    //    position = transform.InverseTransformPoint(position);   // transform position from world space to local space.
-    //    HexCoordinates coordinates = HexCoordinates.FromPosition(position);
-    //    Debug.Log("touched at " + coordinates.ToString());
-    //    int index = coordinates.X + coordinates.Z * width + coordinates.Z / 2;  // 往z轴正向的格子，x坐标有偏移需要修正
-    //    HexCell cell = cells[index];
-    //    cell.color = touchedColor;
-    //    hexMesh.Triangulate(cells);
-    //}
-
-    // 变色改从外部传入
-    public void ColorCell(Vector3 position, Color color)
-    {
-        position = transform.InverseTransformPoint(position);   // transform position from world space to local space.
+    // 由于选中格子的时候操作变多 —— 除了涂色，恐怕还有地形，今后还有移动 —— 则射线检测后改为返回被点击的格子
+    public HexCell GetCell(Vector3 position) {
+        position = transform.InverseTransformDirection(position);
         HexCoordinates coordinates = HexCoordinates.FromPosition(position);
         Debug.Log("touched at " + coordinates.ToString());
-        int index = coordinates.X + coordinates.Z * width + coordinates.Z / 2;  // 往z轴正向的格子，x坐标有偏移需要修正
-        HexCell cell = cells[index];
-        cell.color = color;
+        int index = coordinates.X + coordinates.Z * width + coordinates.Z / 2;
+        return cells[index];
+    }
+    // 产生地形后一定要重绘
+    public void Refresh() {
         hexMesh.Triangulate(cells);
+    }
+
+    // 创建角色
+    void CreatePolice() {
+        PoliceDemo p = Instantiate<PoliceDemo>(policePrefab);
+        Transform chtr = transform.Find("Characters");
+        p.transform.SetParent(chtr);
     }
 }

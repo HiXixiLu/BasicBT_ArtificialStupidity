@@ -80,6 +80,7 @@ public class HexMesh : MonoBehaviour
         Vector3 bridge = HexMetrics.GetBridge(direction);
         Vector3 v3 = v1 + bridge;
         Vector3 v4 = v2 + bridge;
+        v3.y = v4.y = neighbor.Elevation * HexMetrics.elevationStep;
 
         // 添加 blend region 的梯形
         AddQuad(v1, v2, v3, v4);
@@ -95,7 +96,11 @@ public class HexMesh : MonoBehaviour
         // 填充bridge以外的三角缝隙 —— 这是大三角优化版本,由于三个六边形共享一个空隙三角，因此只需填充两个方向的三角形便可
         HexCell nextNeighbor = cell.GetNeighbor(direction.Next());
         if (nextNeighbor != null && direction <= HexDirections.E) {
-            AddTriangle(v2, v4, v2 + HexMetrics.GetBridge(direction.Next()));
+
+            Vector3 v5 = v2 + HexMetrics.GetBridge(direction.Next());   // v5即 nextNeighbor 的 v3点
+            v5.y = nextNeighbor.Elevation * HexMetrics.elevationStep;
+
+            AddTriangle(v2, v4, v5);
             AddTriangleColor(cell.color, neighbor.color, nextNeighbor.color);
         }
     }
