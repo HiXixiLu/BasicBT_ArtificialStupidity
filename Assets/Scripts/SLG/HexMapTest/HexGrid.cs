@@ -8,6 +8,10 @@ using UnityEngine.UI;
  * 管理信息：保存着整个棋盘的长宽信息、保存信息单元数组 HexCell[]
  * 管理UI单元：关联着 Canvas 对象
  * 管理各种预制件的初始化： HexCell， _Prefab等
+ * 
+ * 2019/8/6补充后缀：
+ * 走了弯路，理解有误 —— 这里的 Mesh全部为游戏过程中动态生成，序列化成为额外的工作量，且不易保存
+ * 新方案应该使用静态的固定场景，是否连续地形再说 —— 然后棋格作为地形之上的UI在游戏过程中显示，并用于控制离散化的运动
  */
 public class HexGrid : MonoBehaviour
 {
@@ -20,10 +24,6 @@ public class HexGrid : MonoBehaviour
     [SerializeField] public Text HexCellText;
     Canvas gridCanvas;
     HexMesh hexMesh;
-
-    public PoliceDemo policePrefab;
-    public CitizenDemo citizenPrefab;
-    public EnemyDemo enemyPrefab;
 
     public Color defaultColor = Color.white;
 
@@ -101,12 +101,5 @@ public class HexGrid : MonoBehaviour
     // 产生地形后一定要重绘
     public void Refresh() {
         hexMesh.Triangulate(cells);
-    }
-
-    // 创建角色
-    void CreatePolice() {
-        PoliceDemo p = Instantiate<PoliceDemo>(policePrefab);
-        Transform chtr = transform.Find("Characters");
-        p.transform.SetParent(chtr);
     }
 }

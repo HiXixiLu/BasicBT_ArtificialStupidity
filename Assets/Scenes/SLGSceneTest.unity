@@ -120,36 +120,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &21794423
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 21794424}
-  m_Layer: 0
-  m_Name: Characters
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &21794424
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 21794423}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 1969870332}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &25256567
 GameObject:
   m_ObjectHideFlags: 0
@@ -2270,18 +2240,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a14b195ad00f2754794a7f54154b80d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 6
-  height: 6
+  width: 12
+  height: 12
   cellPrefab: {fileID: 4371960934615676511, guid: 3460876c98441d745ab65225f787b473,
     type: 3}
   cells: []
   HexCellText: {fileID: 547275454131016030, guid: 275b146a5c6dbb1448b099658c08e8d4,
-    type: 3}
-  policePrefab: {fileID: 7273929964633438011, guid: 00eb79421dbb9e649bf254b086badaa4,
-    type: 3}
-  citizenPrefab: {fileID: 2822097416245137521, guid: f771711b7fe907d4a863924bf7670062,
-    type: 3}
-  enemyPrefab: {fileID: 7834481721680794379, guid: 3bc8dc2292e8f7a4aab01e3af0d187c0,
     type: 3}
   defaultColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!4 &1969870332
@@ -2297,7 +2261,6 @@ Transform:
   m_Children:
   - {fileID: 4590070468071803107}
   - {fileID: 1005827295}
-  - {fileID: 21794424}
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

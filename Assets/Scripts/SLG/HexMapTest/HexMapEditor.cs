@@ -39,6 +39,7 @@ public class HexMapEditor : MonoBehaviour
                 EditCell(hexGrid.GetCell(hit.point));
             }
 
+            // 别在这里控制角色 —— 既然是地图编辑场景，则编辑好的地图应该在游戏场景中使用，而不是编辑场景中
             //else if (hit.transform.name.Contains("Police")) {
             //    // TODO: 真正的选中函数，以控制角色行为
             //    Debug.Log("Police is selected.");
