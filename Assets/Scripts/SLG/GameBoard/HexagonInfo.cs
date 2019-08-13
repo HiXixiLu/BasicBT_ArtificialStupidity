@@ -94,6 +94,83 @@ public struct HexCoordinates
     }
 }
 
+/// <summary>
+/// 由于配合 GameBoard 的独立Mesh设计，射线检测时候每个棋格都可以被独立检测到，因此不再需要坐标转换与计算
+/// 这里仅仅记录偏移坐标
+/// </summary>
+[System.Serializable]
+public struct Hex2DCoordinates
+{
+    [SerializeField]
+    private int x, z;
+
+    // 2D coordinate ： 仅有 x, z, 左下角起点
+    public int X
+    {
+        get
+        {
+            return x;
+        }
+    }
+
+    public int Z
+    {
+        get
+        {
+            return z;
+        }
+    }
+
+    public Hex2DCoordinates(int x, int z)
+    {
+        this.x = x;
+        this.z = z;
+    }
+
+    public override string ToString()
+    {
+        return "(" + X.ToString() + ", " + Z.ToString() + ")";
+    }
+
+    // TODO: 找邻居算法是可以优化的
+    public Hex2DCoordinates getNeighborOnDirection(HexDirections des, Hex2DCoordinates source) {
+        switch (des) {
+            case HexDirections.NE:
+                if (source.X % 2 == 0)
+                    return new Hex2DCoordinates(source.X, source.Z + 1);
+                else
+                    return new Hex2DCoordinates(source.X+1, source.Z + 1);
+
+            case HexDirections.E:
+                return new Hex2DCoordinates(source.X + 1, source.Z);
+
+            case HexDirections.SE:
+                if (source.X % 2 == 0)
+                    return new Hex2DCoordinates(source.X, source.Z - 1);
+                else
+                    return new Hex2DCoordinates(source.X + 1, source.Z - 1);
+
+            case HexDirections.SW:
+                if (source.X % 2 == 0)
+                    return new Hex2DCoordinates(source.X - 1, source.Z - 1);
+                else
+                    return new Hex2DCoordinates(source.X, source.Z - 1);
+
+            case HexDirections.W:
+                return new Hex2DCoordinates(source.X - 1, source.Z);
+
+            case HexDirections.NW:
+                if (source.X % 2 == 0)
+                    return new Hex2DCoordinates(source.X - 1, source.Z + 1);
+                else
+                    return new Hex2DCoordinates(source.X, source.Z + 1);
+
+            default:
+                return new Hex2DCoordinates(-1, -1);
+        }
+    }
+}
+
 // 顶点朝上式摆放
 public enum HexDirections
 {

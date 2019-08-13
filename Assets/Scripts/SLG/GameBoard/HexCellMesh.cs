@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 public static class HexCellMetric {
@@ -24,7 +25,9 @@ public static class HexCellMetric {
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class HexCellMesh : MonoBehaviour
 {
-    public HexCoordinates coordinates;  //记录立方坐标
+    //public HexCoordinates coordinates;  //记录立方坐标
+    public Hex2DCoordinates coordinates;    // 仅记录索引下标
+    public Text coordinatesText;   //test only
 
     Mesh cellMesh;
     List<Vector3> vertices;
@@ -33,7 +36,12 @@ public class HexCellMesh : MonoBehaviour
 
     MeshCollider meshCollider;
 
-    [SerializeField] public static Color seletedColor = Color.green, defaultColor = Color.white, hoverColor = Color.yellow;
+    [SerializeField]
+    public static Color seletedColor = Color.green,
+        defaultColor = Color.white,
+        hoverColor = Color.yellow,
+        gunshotColor = new Color((float)117/255, (float)173/255, (float)245/255);
+
     public Vector3 center;
 
     public bool isAvailable = false;
@@ -174,6 +182,9 @@ public class HexCellMesh : MonoBehaviour
                 TriangulateWithColor(defaultColor);
                 isSelected = false;
                 break;
+            case HexCellStatusEvent.GUNSHOT_RANGE:
+                TriangulateWithColor(gunshotColor);
+                break;
             default:
                 TriangulateWithColor(defaultColor);
                 isSelected = false;
@@ -185,5 +196,6 @@ public class HexCellMesh : MonoBehaviour
 public enum HexCellStatusEvent {
     BE_SELECTED,
     RESET,
-    MOUSE_HOVER
+    MOUSE_HOVER,
+    GUNSHOT_RANGE
 }
