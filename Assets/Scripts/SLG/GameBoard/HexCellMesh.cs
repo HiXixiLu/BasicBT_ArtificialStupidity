@@ -25,9 +25,11 @@ public static class HexCellMetric {
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class HexCellMesh : MonoBehaviour
 {
-    //public HexCoordinates coordinates;  //记录立方坐标
-    public Hex2DCoordinates coordinates;    // 仅记录索引下标
-    public Text coordinatesText;   //test only
+    public HexCoordinates coordinates;  //记录立方坐标
+    //public Hex2DCoordinates coordinates;    // 仅记录索引下标
+
+    public Text uiText;   //test only
+    public GameObject selectedHighlight;    //test only
 
     Mesh cellMesh;
     List<Vector3> vertices;
@@ -37,15 +39,33 @@ public class HexCellMesh : MonoBehaviour
     MeshCollider meshCollider;
 
     [SerializeField]
-    public static Color seletedColor = Color.green,
-        defaultColor = Color.white,
-        hoverColor = Color.yellow,
-        gunshotColor = new Color((float)117/255, (float)173/255, (float)245/255);
+    public Color seletedColor , defaultColor, hoverColor, gunshotColor, movementColor;
 
     public Vector3 center;
 
     public bool isAvailable = false;
     public bool isSelected = false;
+
+    int distance;   // 用于保存该棋格与被选中棋格的距离
+    public int Distance {
+        get {
+            return distance;
+        }
+        set {
+            distance = value;
+            UpdateDistanceLabel();
+        }
+    }
+
+    CharacterBase occupant;     // 保存占据该棋格的棋子
+    public CharacterBase Occupant {
+        get {
+            return occupant;
+        }
+        set {
+            occupant = value;
+        }
+    }
 
     private void Awake()
     {
@@ -172,30 +192,58 @@ public class HexCellMesh : MonoBehaviour
     public void HandleEvent(HexCellStatusEvent e) {
         switch (e) {
             case HexCellStatusEvent.BE_SELECTED:
-                TriangulateWithColor(seletedColor);
+                selectedHighlight.SetActive(true);
+                selectedHighlight.GetComponent<Image>().color = seletedColor;
                 isSelected = true;
                 break;
+
             case HexCellStatusEvent.MOUSE_HOVER:
-                TriangulateWithColor(hoverColor);
+                //TriangulateWithColor(hoverColor);
+                selectedHighlight.SetActive(true);
                 break;
+
             case HexCellStatusEvent.RESET:
                 TriangulateWithColor(defaultColor);
+                selectedHighlight.GetComponent<Image>().color = defaultColor;
+                selectedHighlight.SetActive(false);
                 isSelected = false;
                 break;
-            case HexCellStatusEvent.GUNSHOT_RANGE:
+
+            case HexCellStatusEvent.RESET_COLOR:
+                TriangulateWithColor(defaultColor);
+                break;
+
+            case HexCellStatusEvent.RESET_HOVER:
+                selectedHighlight.SetActive(false);
+                break;
+
+            case HexCellStatusEvent.SHOW_GUNSHOT_RANGE:
                 TriangulateWithColor(gunshotColor);
                 break;
+
+            case HexCellStatusEvent.SHOW_MOVEMENT_SCALE:
+                TriangulateWithColor(movementColor);
+                break;
+
             default:
                 TriangulateWithColor(defaultColor);
                 isSelected = false;
                 break;
         }
     }
+
+    void UpdateDistanceLabel() {
+        if(isAvailable)
+            uiText.text = distance.ToString();
+    }
 }
 
 public enum HexCellStatusEvent {
     BE_SELECTED,
     RESET,
+    RESET_COLOR,
+    RESET_HOVER,
     MOUSE_HOVER,
-    GUNSHOT_RANGE
+    SHOW_GUNSHOT_RANGE,
+    SHOW_MOVEMENT_SCALE
 }

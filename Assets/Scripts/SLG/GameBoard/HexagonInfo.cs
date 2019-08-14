@@ -10,7 +10,8 @@ public class HexagonInfo : MonoBehaviour
 [System.Serializable]
 public struct HexCoordinates
 {
-    [SerializeField]
+    //需十分注意 —— HexCoordinates中的 x 坐标是经由真正的行索引(x - z/2)运算 处理过的
+   [SerializeField]
     private int x, z;
 
     // cube coordinate ： x+y+z = 0
@@ -46,18 +47,21 @@ public struct HexCoordinates
 
     public static HexCoordinates FromOffsetCoordinates(int x, int z)
     {
-        return new HexCoordinates(x - z / 2, z);    //将整个坐标归入平面 x + y + z = 0
+        return new HexCoordinates(x - z / 2, z);    // 行索引 x 的处理 —— 修正行偏移的同时，将整个坐标归入平面 x + y + z = 0 
     }
     public override string ToString()
     {
         return "(" + X.ToString() + ", " + Y.ToString() + ", " + Z.ToString() + ")";
+    }
+    public string ToStringAxisCoordinate() {
+        return "(" + X.ToString() + ", " + Z.ToString() + ")";
     }
     public string ToStringOnSeparateLines()
     {
         return X.ToString() + "\n" + Y.ToString() + "\n" + Z.ToString();
     }
 
-    // 将射线检测点转换为单独的Hex中心点
+    // 将射线检测点转换为单独的Hex中心点 —— 整张Mesh实现方式中使用
     public static HexCoordinates FromPosition(Vector3 position)
     {
         float x = position.x / (HexMetrics.innerRadius * 2f);   // 确定一个点击位置属于哪个坐标
@@ -92,11 +96,16 @@ public struct HexCoordinates
 
         return new HexCoordinates(iX, iZ);
     }
+
+    public int DistanceTo(HexCoordinates cell) {
+        int d = (Mathf.Abs(X - cell.X) + Mathf.Abs(Y - cell.Y) + Mathf.Abs(Z - cell.Z)) / 2;
+        return d;
+    }
 }
 
 /// <summary>
 /// 由于配合 GameBoard 的独立Mesh设计，射线检测时候每个棋格都可以被独立检测到，因此不再需要坐标转换与计算
-/// 这里仅仅记录偏移坐标
+/// 这里仅仅记录偏移坐标(轴坐标)
 /// </summary>
 [System.Serializable]
 public struct Hex2DCoordinates
@@ -169,6 +178,10 @@ public struct Hex2DCoordinates
                 return new Hex2DCoordinates(-1, -1);
         }
     }
+    // 计算两格间的距离
+    //public int DistanceTo(Hex2DCoordinates co) {
+
+    //}
 }
 
 // 顶点朝上式摆放

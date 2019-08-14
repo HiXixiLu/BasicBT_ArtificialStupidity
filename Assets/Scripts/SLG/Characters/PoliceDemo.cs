@@ -33,7 +33,7 @@ public class PoliceDemo : CharacterBase
     }
 
     public void attack() {
-        // TODO: 先确定是通过棋格选定角色，还是直接选定角色
+        // TODO: 怎样发动攻击
     }
 
     private void beAttacked(int value) {

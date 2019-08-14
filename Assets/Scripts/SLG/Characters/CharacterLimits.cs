@@ -10,7 +10,7 @@ public static class CharacterLimits
     // 生理数值
     public const int HealthLimit = 100;
     public const int MovementScaleLimit = 10;
-    public const int MeleeMovementScale = 5;
+    public const int MeleeMovementScale = 4;
     public const int ArcherMovementScale = 6;
 
     // 道具数值
