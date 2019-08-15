@@ -270,6 +270,13 @@ MonoBehaviour:
     z: 0
   uiText: {fileID: 73316553357035358}
   selectedHighlight: {fileID: 2533821887598319770}
+  neighbors:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   seletedColor: {r: 0.87599427, g: 0.9811321, b: 0.43965825, a: 1}
   defaultColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.9811321, g: 0.82761264, b: 0.0046279924, a: 1}

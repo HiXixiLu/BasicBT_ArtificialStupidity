@@ -15,9 +15,10 @@ public class HexGridManager : MonoBehaviour
     public HexCellMesh cellMeshPrefab;
     public HexCellMesh[] cells; // TODO: 采用什么数据结构才能合理地管理各个棋格呢？
 
-    HexCellMesh lastSelected, lastHover;
-    List<HexCellMesh> selectedNeighbors = new List<HexCellMesh>();
+    HexCellMesh searchFromHex, selectedHex, lastHover;
+    List<HexCellMesh> movementRange = new List<HexCellMesh>();
     List<HexCellMesh> HoveredNeighbors = new List<HexCellMesh>();
+    List<HexCellMesh> pathHexes = new List<HexCellMesh>();
 
     public CharacterSpawner cSpawner;
 
@@ -57,18 +58,64 @@ public class HexGridManager : MonoBehaviour
         // 显示 坐标
         cells[i].uiText.text = cells[i].coordinates.ToStringAxisCoordinate();
         //cells[i].uiText.text = cells[i].coordinates.ToString();
+
+        // 自东向西添加东西方向的邻居
+        if (x > 0)
+        {
+            cells[i].SetNeighbors(HexDirections.W, cells[i - 1]);
+        }
+
+        // 自北向南添加邻居 —— 由于Z方向的之字布局，偶数行与奇数行要区别对待
+        if (z > 0)
+        {
+            if ((z & 1) == 0)
+            {
+                // even rows
+                cells[i].SetNeighbors(HexDirections.SE, cells[i - width]);
+                // SE neighbors of even rows
+                if (x > 0)
+                {
+                    cells[i].SetNeighbors(HexDirections.SW, cells[i - width - 1]);
+                }
+            }
+            else
+            {
+                // odd rows
+                cells[i].SetNeighbors(HexDirections.SW, cells[i - width]);
+                // SE neighbors of odd row
+                if (x < width - 1)
+                {
+                    cells[i].SetNeighbors(HexDirections.SE, cells[i - width + 1]);
+                }
+            }
+        }
     }
 
     private void HandleClick() {
         Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
         if (Physics.Raycast(inputRay, out hit)) {
+
             if (hit.transform.name.Contains("HexCellMesh")) {
-                recolorClickedChunk(hit.transform.GetComponent<HexCellMesh>());
+                HexCellMesh cell = hit.transform.GetComponent<HexCellMesh>();
+                recolorClickedChunk(cell);
 
                 // 计算各格子与选中格的距离
-                FindDistancesTo(hit.transform.GetComponent<HexCellMesh>());
+                if (cell.Occupant != null)
+                {
+                    if (searchFromHex != null) {
+                        searchFromHex.HandleEvent(HexCellStatusEvent.RESET_PATH_HEX);
+                        clearPathHexes();
+                    }
+
+                    searchFromHex = cell;
+                }
+                else if(cell != searchFromHex && searchFromHex != null){
+                    searchFromHex.HandleEvent(HexCellStatusEvent.BE_SELECTED);
+                    FindPath(searchFromHex, selectedHex);
+                }
             }
+
         }
     }
     private void HandleMouseHover() {
@@ -89,13 +136,13 @@ public class HexGridManager : MonoBehaviour
     /// <param name="cell"> 被点击的对象 </param>
     private void recolorClickedHex(HexCellMesh cell)
     {
-        if (lastSelected != null)
+        if (selectedHex != null)
         {
-            lastSelected.HandleEvent(HexCellStatusEvent.RESET);
+            selectedHex.HandleEvent(HexCellStatusEvent.RESET);
         }
 
         cell.HandleEvent(HexCellStatusEvent.BE_SELECTED);
-        lastSelected = cell;
+        selectedHex = cell;
     }
     /// <summary>
     /// 更新鼠标悬停棋格的颜色
@@ -105,7 +152,7 @@ public class HexGridManager : MonoBehaviour
     {
         if (lastHover != null)
         {
-            if (lastSelected == lastHover)
+            if (selectedHex == lastHover)
                 lastHover.HandleEvent(HexCellStatusEvent.BE_SELECTED);
             else
                 lastHover.HandleEvent(HexCellStatusEvent.RESET_HOVER);
@@ -122,23 +169,17 @@ public class HexGridManager : MonoBehaviour
     /// <param name="range"> 距离范围 </param>
     private void recolorClickedChunk(HexCellMesh cell)
     {
-        foreach (HexCellMesh c in selectedNeighbors)
+        foreach (HexCellMesh c in movementRange)
         {
             c.HandleEvent(HexCellStatusEvent.RESET_COLOR);
         }
 
         recolorClickedHex(cell);
 
-        if (cell.Occupant == null)
+        movementRange = findMovementRange(cell);
+        foreach (HexCellMesh c in movementRange)
         {
-            return;
-        }
-        else {
-            selectedNeighbors = findNeighbors(cell.coordinates, cell.Occupant.movementScale);
-            foreach (HexCellMesh c in selectedNeighbors)
-            {
-                c.HandleEvent(HexCellStatusEvent.SHOW_MOVEMENT_SCALE);
-            }
+            c.HandleEvent(HexCellStatusEvent.SHOW_MOVEMENT_SCALE);
         }
 
     }
@@ -163,65 +204,6 @@ public class HexGridManager : MonoBehaviour
     /// <param name="pos"></param>
     /// <param name="range"></param>
     /// <returns></returns>
-    private List<HexCellMesh> findNeighbors(Hex2DCoordinates pos, int range) {
-        List<HexCellMesh> neighbors = new List<HexCellMesh>();
-        // 与 pos 同一行
-        for (int i = 1; i <= range; i++) {
-            int idx = 0;
-            if (pos.X + i < width) {
-                idx = pos.X + i + pos.Z * width;
-                neighbors.Add(cells[idx]);
-            }
-            if (pos.X - i >= 0) {
-                idx = pos.X - i + pos.Z * width;
-                neighbors.Add(cells[idx]);
-            }            
-        }
-
-        // range 内的 pos 上下行
-        for (int i = 1; i <= range; i++) {
-            int HexNum = 2 * range + 1 - i;
-            int xLeft, xRight, curZ;
-
-            if (pos.Z % 2 == 0)
-            {
-                xLeft = (pos.X - HexNum / 2);
-                xRight = (xLeft + HexNum - 1);         
-            }
-            else
-            {
-                xRight = (pos.X + HexNum / 2);
-                xLeft = xRight - HexNum + 1;
-            }
-
-            xLeft = xLeft >= 0 ? xLeft : 0;
-            xRight = xRight < width ? xRight : width;
-
-            // 上半
-            curZ = (pos.Z + i);
-            if (curZ < height)
-            {
-                for (int j = xLeft; j <= xRight; j++)
-                {
-                    int idx = j + curZ * width;
-                    neighbors.Add(cells[idx]);
-                }
-            }
-            // 下半
-            curZ = pos.Z - i;
-            if (curZ >= 0)
-            {
-                for (int j = xLeft; j <= xRight; j++)
-                {
-                    int idx = j + curZ * width;
-                    neighbors.Add(cells[idx]);
-                }
-            }
-
-
-        }
-        return neighbors;
-    }
     private List<HexCellMesh> findNeighbors(HexCoordinates pos, int range)
     {
         // 需十分注意 —— HexCoordinates中的 x 坐标是经由真正的行偏移值 (x - z/2)运算 处理过的
@@ -288,13 +270,101 @@ public class HexGridManager : MonoBehaviour
         }
         return neighbors;
     }
-
-    private void FindDistancesTo(HexCellMesh cell)
-    {
-        for (int i = 0; i < cells.Length; i++)
+    List<HexCellMesh> findMovementRange(HexCellMesh cell) {
+        List<HexCellMesh> hexes = new List<HexCellMesh>();
+        if (cell.Occupant != null)
         {
-            cells[i].Distance = cell.coordinates.DistanceTo(cells[i].coordinates);
+            return hexes;
         }
+        else {
+            // TODO: 寻找一定距离内的可移动格子
+            return hexes;
+        }
+
+    }
+
+    // test only
+    //private void FindDistancesTo(HexCellMesh cell)
+    //{
+    //    for (int i = 0; i < cells.Length; i++)
+    //    {
+    //        cells[i].Distance = cell.coordinates.DistanceTo(cells[i].coordinates);
+    //    }
+    //}
+    int FindDistance(HexCellMesh from, HexCellMesh to) {
+        return from.coordinates.DistanceTo(to.coordinates); //不考虑障碍的直线距离
+    }
+
+    /// <summary>
+    /// 寻路算法
+    /// </summary>
+    /// <param name="fromCell"></param>
+    /// <param name="toCell"></param>
+    void FindPath(HexCellMesh fromCell, HexCellMesh toCell) {
+        StopAllCoroutines();
+        StartCoroutine(SearchPath(fromCell, toCell));
+    }
+    // Dijkstra Algorithm
+    IEnumerator SearchPath(HexCellMesh fromCell, HexCellMesh toCell) {
+        clearPathHexes();
+
+        for (int i = 0; i < cells.Length; i++) {
+            cells[i].Distance = int.MaxValue;
+        }
+        yield return null;
+        List<HexCellMesh> frontiers = new List<HexCellMesh>();
+        fromCell.Distance = 0;
+        toCell.HandleEvent(HexCellStatusEvent.BE_SELECTED);
+
+        frontiers.Add(fromCell);
+
+        while (frontiers.Count > 0) {
+
+            yield return null;  //方便观察
+
+            HexCellMesh current = frontiers[0];
+            frontiers.RemoveAt(0);  // 出列
+
+            if (current == toCell)
+            {
+                current = current.PathFrom;
+                // 显示路径
+                while (current != fromCell)
+                {
+                    pathHexes.Add(current);
+                    current.HandleEvent(HexCellStatusEvent.SHOW_PATH_HEX);
+                    current = current.PathFrom; //回溯
+                }
+                break;
+            }
+
+            for (HexDirections d = HexDirections.NE; d <= HexDirections.NW; d++) {
+                HexCellMesh neighbor = current.GetNeighbor(d);
+                if (neighbor == null)
+                    continue;
+                if (!neighbor.isAvailable || neighbor.Occupant != null)
+                    continue;
+
+                // 若未被处理过
+                if (neighbor.Distance == int.MaxValue)
+                {
+                    neighbor.Distance = current.Distance + 1;
+                    neighbor.PathFrom = current;
+                    frontiers.Add(neighbor);
+                }
+                // 若已处理过
+                else if (current.Distance + 1 < neighbor.Distance) {
+                    neighbor.Distance = current.Distance + 1;
+                    neighbor.PathFrom = current;
+                }
+            }
+        }
+    }
+    void clearPathHexes() {
+        foreach (HexCellMesh c in pathHexes) {
+            c.HandleEvent(HexCellStatusEvent.RESET_PATH_HEX);
+        }
+        pathHexes.Clear();
     }
 
     private void Update()

@@ -36,24 +36,37 @@ public class HexCellMesh : MonoBehaviour
     List<int> triangles;
     List<Color> colors;
 
+    [SerializeField] HexCellMesh[] neighbors;
+
     MeshCollider meshCollider;
 
     [SerializeField]
-    public Color seletedColor , defaultColor, hoverColor, gunshotColor, movementColor;
+    public Color seletedColor, defaultColor, hoverColor, gunshotColor, movementColor;
 
     public Vector3 center;
 
     public bool isAvailable = false;
     public bool isSelected = false;
 
-    int distance;   // 用于保存该棋格与被选中棋格的距离
-    public int Distance {
+
+    // 寻路需要用的属性
+    int distance;
+    public int Distance { 
         get {
             return distance;
         }
         set {
             distance = value;
             UpdateDistanceLabel();
+        }
+    }
+    HexCellMesh pathFrom;
+    public HexCellMesh PathFrom {
+        get {
+            return pathFrom;
+        }
+        set {
+            pathFrom = value;
         }
     }
 
@@ -73,10 +86,13 @@ public class HexCellMesh : MonoBehaviour
         vertices = new List<Vector3>();
         triangles = new List<int>();
         colors = new List<Color>();
-        meshCollider = this.gameObject.AddComponent<MeshCollider>(); 
+        meshCollider = this.gameObject.AddComponent<MeshCollider>();
     }
 
-    // 渲染网格
+    /// <summary>
+    /// 渲染六边形 Mesh
+    /// </summary>
+    /// <param name="position"></param>
     public void TriangulateCellMesh(Vector3 position) {
 
         center = position;
@@ -104,7 +120,7 @@ public class HexCellMesh : MonoBehaviour
             AddTriangle(
                 Vector3.zero,
                 HexCellMetric.corners[i],
-                HexCellMetric.corners[(i + 1)%6]
+                HexCellMetric.corners[(i + 1) % 6]
                 );
 
             AddTriangleColor(color);
@@ -170,7 +186,7 @@ public class HexCellMesh : MonoBehaviour
         }
     }
     private int cornerIsAvailable(Vector3 origin) {
-        origin.y += 9999f;
+        origin.y += 99f;
         Ray topDown = new Ray(origin, Vector3.down);
         RaycastHit hit;
         if (Physics.Raycast(topDown, out hit)) {
@@ -186,57 +202,110 @@ public class HexCellMesh : MonoBehaviour
     }
 
     /// <summary>
+    /// 相邻棋格设置邻接表存储
+    /// </summary>
+    /// <param name="direction"></param>
+    /// <returns></returns>
+    public HexCellMesh GetNeighbor(HexDirections direction)
+    {
+        return neighbors[(int)direction];
+    }
+    public void SetNeighbors(HexDirections direction, HexCellMesh cell)
+    {
+        neighbors[(int)direction] = cell;
+        // 注意： 相邻关系是相互的
+        cell.neighbors[(int)direction.Opposite()] = this;
+    }
+
+    /// <summary>
     /// 处理棋格状态变化
     /// </summary>
     /// <param name="e"> 枚举事件 </param>
     public void HandleEvent(HexCellStatusEvent e) {
         switch (e) {
             case HexCellStatusEvent.BE_SELECTED:
-                selectedHighlight.SetActive(true);
-                selectedHighlight.GetComponent<Image>().color = seletedColor;
-                isSelected = true;
+                handleBeSelected();
                 break;
 
             case HexCellStatusEvent.MOUSE_HOVER:
-                //TriangulateWithColor(hoverColor);
-                selectedHighlight.SetActive(true);
+                handleMouseHover();
                 break;
 
             case HexCellStatusEvent.RESET:
-                TriangulateWithColor(defaultColor);
-                selectedHighlight.GetComponent<Image>().color = defaultColor;
-                selectedHighlight.SetActive(false);
-                isSelected = false;
+                handleReset();
                 break;
 
             case HexCellStatusEvent.RESET_COLOR:
-                TriangulateWithColor(defaultColor);
+                handleResetColor();
                 break;
 
             case HexCellStatusEvent.RESET_HOVER:
-                selectedHighlight.SetActive(false);
+                handleResetHover();
                 break;
 
             case HexCellStatusEvent.SHOW_GUNSHOT_RANGE:
-                TriangulateWithColor(gunshotColor);
+                handleShowGunshotRange();
                 break;
 
             case HexCellStatusEvent.SHOW_MOVEMENT_SCALE:
-                TriangulateWithColor(movementColor);
+                handleShowMovementScale();
+                break;
+
+            case HexCellStatusEvent.RESET_PATH_HEX:
+                handleResetPath();
+                break;
+
+            case HexCellStatusEvent.SHOW_PATH_HEX:
+                handleShowPathHex();
                 break;
 
             default:
-                TriangulateWithColor(defaultColor);
-                isSelected = false;
+                handleReset();
                 break;
         }
+    }
+    void handleBeSelected() {
+        selectedHighlight.SetActive(true);
+        selectedHighlight.GetComponent<Image>().color = seletedColor;
+        isSelected = true;
+    }
+    void handleMouseHover() {
+        //TriangulateWithColor(hoverColor);
+        selectedHighlight.SetActive(true);
+    }
+    void handleReset() {
+        TriangulateWithColor(defaultColor);
+        selectedHighlight.GetComponent<Image>().color = defaultColor;
+        selectedHighlight.SetActive(false);
+        isSelected = false;
+    }
+    void handleResetColor() {
+        TriangulateWithColor(defaultColor);
     }
 
     void UpdateDistanceLabel() {
         if(isAvailable)
             uiText.text = distance.ToString();
     }
+    void handleResetHover() {
+        selectedHighlight.SetActive(false);
+    }
+    void handleShowGunshotRange() {
+        TriangulateWithColor(gunshotColor);
+    }
+    void handleShowMovementScale() {
+        TriangulateWithColor(movementColor);
+    }
+    void handleResetPath() {
+        selectedHighlight.GetComponent<Image>().color = defaultColor;
+        selectedHighlight.SetActive(false);
+    }
+    void handleShowPathHex() {
+        selectedHighlight.GetComponent<Image>().color = movementColor;
+        selectedHighlight.SetActive(true);
+    }
 }
+
 
 public enum HexCellStatusEvent {
     BE_SELECTED,
@@ -245,5 +314,7 @@ public enum HexCellStatusEvent {
     RESET_HOVER,
     MOUSE_HOVER,
     SHOW_GUNSHOT_RANGE,
-    SHOW_MOVEMENT_SCALE
+    SHOW_MOVEMENT_SCALE,
+    RESET_PATH_HEX,
+    SHOW_PATH_HEX
 }
