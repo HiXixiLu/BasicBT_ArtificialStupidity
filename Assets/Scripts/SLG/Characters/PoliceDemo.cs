@@ -4,14 +4,13 @@ using UnityEngine;
 
 public class PoliceDemo : CharacterBase
 {
-    // 基础属性
-    int gunshot = CharacterLimits.PistalGunshot;
-    int damage = CharacterLimits.PistolDamage;
-
     protected override void Awake()
     {
-        health = CharacterLimits.HealthLimit;
-        movementScale = CharacterLimits.MeleeMovementScale;
+        Health = CharacterLimits.HealthLimit;
+        MovementScaleSetter = CharacterLimits.MeleeMovementScale;
+        GunshotSetter = CharacterLimits.PistalGunshot;
+        DamageSetter = CharacterLimits.PistolDamage;
+
         base.Awake();
     }
 
@@ -38,19 +37,19 @@ public class PoliceDemo : CharacterBase
 
     private void beAttacked(int value) {
 
-        if (health > 0) {
-            health -= value;
+        if (Health > 0) {
+            Health -= value;
         }
 
-        if (health <= 0) {
+        if (Health <= 0) {
             down();
         }
     }
 
     private void beRescued(int value) {
-        if (isDown)
+        if (IsDown)
             return;
 
-        health = (health + value) > CharacterLimits.HealthLimit ? CharacterLimits.HealthLimit : health + value;
+        Health = (Health + value) > CharacterLimits.HealthLimit ? CharacterLimits.HealthLimit : Health + value;
     }
 }

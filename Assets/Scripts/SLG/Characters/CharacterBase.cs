@@ -4,9 +4,64 @@ using UnityEngine;
 
 public class CharacterBase : MonoBehaviour
 {
-    public int health;          // 生命
-    public int movementScale;   // 移动范围
-    public bool isDown = false; // 是否倒下
+    int health;          // 生命
+    int movementScale;   // 移动范围
+    bool isDown = false; // 是否倒下
+    int gunshot;
+    int damage;
+    public int Gunshot
+    {
+        get
+        {
+            return gunshot;
+        }
+    }
+    protected int GunshotSetter {
+        set {
+            gunshot = value;
+        }
+    }
+    public int Damage
+    {
+        get
+        {
+            return damage;
+        }
+    }
+    protected int DamageSetter {
+        set {
+            damage = value;
+        }
+    }
+    public int MovementScale {
+        get {
+            return movementScale;
+        }
+    }
+    protected int MovementScaleSetter {
+        set {
+            movementScale = value;
+        }
+    }
+    public bool IsDown {
+        get {
+            return isDown;
+        }
+        set {
+            isDown = value;
+        }
+    }
+    public int Health {
+        get {
+            return health;
+        }
+        set {
+            if (health + value >= CharacterLimits.HealthLimit)
+                health = CharacterLimits.HealthLimit;
+            else
+                health = value;
+        }
+    }
 
     protected virtual void Awake() { }
 

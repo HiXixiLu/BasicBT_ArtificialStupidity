@@ -45,9 +45,8 @@ public class HexCellMesh : MonoBehaviour
 
     public Vector3 center;
 
-    public bool isAvailable = false;
-    public bool isSelected = false;
-
+    private HexCellStatus status = HexCellStatus.UNAVAILABLE;
+    private HexCellStatus lastStatus;
 
     // 寻路需要用的属性
     int distance;
@@ -88,6 +87,9 @@ public class HexCellMesh : MonoBehaviour
         colors = new List<Color>();
         meshCollider = this.gameObject.AddComponent<MeshCollider>();
     }
+    public bool canbeDestination() {
+        return status != HexCellStatus.UNAVAILABLE && occupant == null;
+    }
 
     /// <summary>
     /// 渲染六边形 Mesh
@@ -100,6 +102,8 @@ public class HexCellMesh : MonoBehaviour
         // 射线检测障碍物
         if (!hexCellisAvailable())
             return;
+        else
+            status = HexCellStatus.AVAILABLE;
 
         cellMesh.Clear();
         vertices.Clear();
@@ -144,7 +148,7 @@ public class HexCellMesh : MonoBehaviour
 
     // 改变颜色（暂时）
     private void TriangulateWithColor(Color color) {
-        if (!isAvailable)
+        if (status == HexCellStatus.UNAVAILABLE)
             return;
 
         cellMesh.Clear();
@@ -166,7 +170,6 @@ public class HexCellMesh : MonoBehaviour
     private bool hexCellisAvailable() {
         int count = 0;
         if (cornerIsAvailable(center) == 1) {
-            isAvailable = false;
             return false;
         }
 
@@ -177,11 +180,9 @@ public class HexCellMesh : MonoBehaviour
 
         if (count > 0)
         {
-            isAvailable = false;
             return false;
         }
         else {
-            isAvailable = true;
             return true;
         }
     }
@@ -195,7 +196,7 @@ public class HexCellMesh : MonoBehaviour
                 return 0;
             }
             else {
-                return 1;   // 有占用
+                return 1;
             }
         }
         return 0;
@@ -218,103 +219,174 @@ public class HexCellMesh : MonoBehaviour
     }
 
     /// <summary>
-    /// 处理棋格状态变化
+    /// 处理棋格状态变化 —— 一个用枚举实现的有限状态机
+    /// 这里是状态转移函数
     /// </summary>
     /// <param name="e"> 枚举事件 </param>
-    public void HandleEvent(HexCellStatusEvent e) {
+    public void TransferToStatus(HexCellStatus e) {
         switch (e) {
-            case HexCellStatusEvent.BE_SELECTED:
-                handleBeSelected();
+            case HexCellStatus.AVAILABLE:
+                enterAvailableStatus();
                 break;
 
-            case HexCellStatusEvent.MOUSE_HOVER:
-                handleMouseHover();
+            case HexCellStatus.BE_ATTACKED:
+                enterAttackedStatus();
                 break;
 
-            case HexCellStatusEvent.RESET:
-                handleReset();
+            case HexCellStatus.BE_RESCUED:
+                enterRescuedStatus();
                 break;
 
-            case HexCellStatusEvent.RESET_COLOR:
-                handleResetColor();
+            case HexCellStatus.IN_GUNSHOT:
+                enterGunshotStatus();
                 break;
 
-            case HexCellStatusEvent.RESET_HOVER:
-                handleResetHover();
+            case HexCellStatus.IN_MOVEMENT_RANGE:
+                enterMovementRangeStatus();
                 break;
 
-            case HexCellStatusEvent.SHOW_GUNSHOT_RANGE:
-                handleShowGunshotRange();
+            case HexCellStatus.OCCUPIED_AND_SELECTED:
+                enterOSStatus();
                 break;
 
-            case HexCellStatusEvent.SHOW_MOVEMENT_SCALE:
-                handleShowMovementScale();
+            case HexCellStatus.OCCUPIED_AND_UNSELECTED:
+                enterOUSStatus();
                 break;
 
-            case HexCellStatusEvent.RESET_PATH_HEX:
-                handleResetPath();
+            case HexCellStatus.UNOCCUPIED_AND_SELETED:
+                enterUOSStatus();
                 break;
 
-            case HexCellStatusEvent.SHOW_PATH_HEX:
-                handleShowPathHex();
+            case HexCellStatus.PATH_HIGHLIGHT:
+                enterPathHighlightStatus();
+                break;
+
+            case HexCellStatus.UNAVAILABLE:
+                enterUnavailableStatus();
+                break;
+
+            case HexCellStatus.DESTINATION_HOVER:
+                enterDestinationHoverStatus();
                 break;
 
             default:
-                handleReset();
+                enterAvailableStatus();
                 break;
         }
     }
-    void handleBeSelected() {
+    
+    // 一系列状态事件函数 —— 每个状态下的属性改变也应该是无交集的
+    void enterAvailableStatus() {
+        TriangulateWithColor(defaultColor);
+        selectedHighlight.GetComponent<Image>().color = defaultColor;
+        selectedHighlight.SetActive(false);
+
+        lastStatus = status = HexCellStatus.AVAILABLE;
+
+    }
+    void enterAttackedStatus() { }
+    void enterRescuedStatus() { }
+    void enterGunshotStatus() {
+        if (status == HexCellStatus.UNAVAILABLE)
+            return;
+
+        TriangulateWithColor(gunshotColor);
+        selectedHighlight.SetActive(false);
+        selectedHighlight.GetComponent<Image>().color = defaultColor;
+
+        if (status == HexCellStatus.IN_MOVEMENT_RANGE 
+            || status == HexCellStatus.OCCUPIED_AND_UNSELECTED 
+            || status == HexCellStatus.OCCUPIED_AND_SELECTED 
+            || status == HexCellStatus.AVAILABLE) {
+
+            lastStatus = status;
+        }
+        status = HexCellStatus.IN_GUNSHOT;
+
+    }
+    void enterMovementRangeStatus() {
+        TriangulateWithColor(movementColor);
+        selectedHighlight.SetActive(false);
+        selectedHighlight.GetComponent<Image>().color = defaultColor;
+
+        lastStatus = status = HexCellStatus.IN_MOVEMENT_RANGE;
+
+    }
+    void enterOSStatus() {
+        TriangulateWithColor(defaultColor);
         selectedHighlight.SetActive(true);
         selectedHighlight.GetComponent<Image>().color = seletedColor;
-        isSelected = true;
+
+        lastStatus = status = HexCellStatus.OCCUPIED_AND_SELECTED;
     }
-    void handleMouseHover() {
-        //TriangulateWithColor(hoverColor);
-        selectedHighlight.SetActive(true);
-    }
-    void handleReset() {
+    void enterOUSStatus() {
         TriangulateWithColor(defaultColor);
-        selectedHighlight.GetComponent<Image>().color = defaultColor;
         selectedHighlight.SetActive(false);
-        isSelected = false;
+        selectedHighlight.GetComponent<Image>().color = defaultColor;
+
+        lastStatus = status = HexCellStatus.OCCUPIED_AND_UNSELECTED;
     }
-    void handleResetColor() {
+    void enterUOSStatus() {
         TriangulateWithColor(defaultColor);
+        selectedHighlight.SetActive(true);
+        selectedHighlight.GetComponent<Image>().color = seletedColor;
+
+        lastStatus = status = HexCellStatus.UNOCCUPIED_AND_SELETED;
+    }
+    void enterPathHighlightStatus()
+    {
+        TriangulateWithColor(defaultColor);
+        selectedHighlight.SetActive(true);
+        selectedHighlight.GetComponent<Image>().color = defaultColor;
+
+        lastStatus = status = HexCellStatus.PATH_HIGHLIGHT;
+    }
+    void enterUnavailableStatus() {
+        lastStatus = status = HexCellStatus.UNAVAILABLE;
+
+        selectedHighlight.SetActive(false);
+        selectedHighlight.GetComponent<Image>().color = defaultColor;
+    }
+    void enterDestinationHoverStatus() {
+        TriangulateWithColor(defaultColor);
+        selectedHighlight.SetActive(true);
+        selectedHighlight.GetComponent<Image>().color = defaultColor;
+
+        if (status == HexCellStatus.IN_MOVEMENT_RANGE
+            || status == HexCellStatus.OCCUPIED_AND_UNSELECTED
+            || status == HexCellStatus.OCCUPIED_AND_SELECTED
+            || status == HexCellStatus.AVAILABLE)
+        {
+
+            lastStatus = status;
+        }
+
+        status = HexCellStatus.DESTINATION_HOVER;   // 8/18：不改变lastStatus，因为悬停棋格周围一定是处于 IN_GUNSHOT状态的棋格
     }
 
-    void UpdateDistanceLabel() {
-        if(isAvailable)
+    public void GoBackLastStatus() {
+        if(lastStatus != HexCellStatus.UNAVAILABLE)
+            TransferToStatus(lastStatus);
+    }
+
+    public void UpdateDistanceLabel() {
+        if(status != HexCellStatus.UNAVAILABLE)
             uiText.text = distance.ToString();
-    }
-    void handleResetHover() {
-        selectedHighlight.SetActive(false);
-    }
-    void handleShowGunshotRange() {
-        TriangulateWithColor(gunshotColor);
-    }
-    void handleShowMovementScale() {
-        TriangulateWithColor(movementColor);
-    }
-    void handleResetPath() {
-        selectedHighlight.GetComponent<Image>().color = defaultColor;
-        selectedHighlight.SetActive(false);
-    }
-    void handleShowPathHex() {
-        selectedHighlight.GetComponent<Image>().color = movementColor;
-        selectedHighlight.SetActive(true);
     }
 }
 
-
-public enum HexCellStatusEvent {
-    BE_SELECTED,
-    RESET,
-    RESET_COLOR,
-    RESET_HOVER,
-    MOUSE_HOVER,
-    SHOW_GUNSHOT_RANGE,
-    SHOW_MOVEMENT_SCALE,
-    RESET_PATH_HEX,
-    SHOW_PATH_HEX
+// 枚举实现的有限状态机
+public enum HexCellStatus {
+    UNAVAILABLE,    // 被障碍或死去棋子占据的不可用状态
+    AVAILABLE,      // 单纯的空闲态
+    MOUSE_LEAVED,    // 从鼠标悬停离开
+    OCCUPIED_AND_SELECTED,      // 棋格上有棋子且被选中
+    OCCUPIED_AND_UNSELECTED,
+    UNOCCUPIED_AND_SELETED,
+    PATH_HIGHLIGHT,     // 标识途径路径的高亮态
+    IN_MOVEMENT_RANGE,  // 处于被选中棋子的移动范围内
+    IN_GUNSHOT,         // 处于被选中棋子的攻击范围内
+    BE_ATTACKED,        // 棋格上的棋子被攻击
+    BE_RESCUED,          // 棋格上的棋子被救援
+    DESTINATION_HOVER    // 有棋子被选中时的悬空目标点
 }

@@ -30,6 +30,7 @@ public class CharacterSpawner : MonoBehaviour
             p.transform.position += cell.transform.position;
 
             cell.Occupant = p;
+            cell.TransferToStatus(HexCellStatus.OCCUPIED_AND_UNSELECTED);
 
             polices.Add(p);
         }
@@ -43,6 +44,7 @@ public class CharacterSpawner : MonoBehaviour
             e.transform.position += cell.transform.position;
 
             cell.Occupant = e;
+            cell.TransferToStatus(HexCellStatus.OCCUPIED_AND_UNSELECTED);
 
             enemies.Add(e);
         }
