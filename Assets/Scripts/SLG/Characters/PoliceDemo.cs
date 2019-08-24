@@ -27,10 +27,6 @@ public class PoliceDemo : CharacterBase
         }
     }
 
-    public override void movetoPosition() {
-        // TODO: 先完成寻路算法
-    }
-
     public void attack() {
         // TODO: 怎样发动攻击
     }

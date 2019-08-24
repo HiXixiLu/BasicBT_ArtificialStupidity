@@ -1114,6 +1114,7 @@ MonoBehaviour:
   cellMeshPrefab: {fileID: 8762478217833160275, guid: 17820128802adb443a956c71630057c7,
     type: 3}
   cells: []
+  epsino: {x: 0.01, y: 0.01, z: 0.01}
   cSpawner: {fileID: 1634671304}
 --- !u!1 &1570280487
 GameObject:

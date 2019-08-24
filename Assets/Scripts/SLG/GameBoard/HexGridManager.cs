@@ -5,7 +5,7 @@ using UnityEngine;
 
 /* Xixi: 
  * 2019/8 月初建立
- * 2019/8/14  好像这个类在慢慢变成一个全局的 Controller 类啊哈哈
+ * 2019/8/19  迟早要用有限状态机重构，或者拆分一个单独的状态机
  */
 public class HexGridManager : MonoBehaviour
 {
@@ -19,6 +19,7 @@ public class HexGridManager : MonoBehaviour
     List<HexCellMesh> movementRange = new List<HexCellMesh>();
     List<HexCellMesh> HoveredNeighbors = new List<HexCellMesh>();
     List<HexCellMesh> pathHexes = new List<HexCellMesh>();
+
 
     public CharacterSpawner cSpawner;
 
@@ -295,44 +296,67 @@ public class HexGridManager : MonoBehaviour
         }
         return neighbors;
     }
+    /// <summary>
+    /// 寻找某个格子上棋子的可移动范围 —— 与寻路算法实际上进行了重复的计算
+    /// </summary>
+    /// <param name="cell"></param>
+    /// <returns></returns>
     List<HexCellMesh> findMovementRange(HexCellMesh cell) { 
         List<HexCellMesh> hexes = new List<HexCellMesh>();
+
         if (cell.Occupant == null)
             return hexes;
 
-        int scale = cell.Occupant.MovementScale;
-
         for (int i = 0; i < cells.Length; i++)
         {
-            if (!cells[i].canbeDestination())
-                continue;
+            cells[i].Distance = int.MaxValue;
+        }
 
-            cells[i].Distance = cell.coordinates.DistanceTo(cells[i].coordinates);
-            cells[i].UpdateDistanceLabel();
+        List<HexCellMesh> frontiers = new List<HexCellMesh>();
+        cell.Distance = 0;
 
-            if (cells[i].Distance <= scale)
+        frontiers.Add(cell);
+
+        while (frontiers.Count > 0)
+        {
+
+            HexCellMesh current = frontiers[0];
+            frontiers.RemoveAt(0);  // 出列
+
+            for (HexDirections d = HexDirections.NE; d <= HexDirections.NW; d++)
             {
-                hexes.Add(cells[i]);
+                HexCellMesh neighbor = current.GetNeighbor(d);
+                if (neighbor == null)
+                    continue;
+                if (!neighbor.canbeDestination())
+                    continue;
+
+                // 若未被处理过
+                if (neighbor.Distance == int.MaxValue)
+                {
+                    neighbor.Distance = current.Distance + 1;
+                    neighbor.PathFrom = current;
+                    frontiers.Add(neighbor);
+                }
+                // 若已处理过
+                else if (current.Distance + 1 < neighbor.Distance)
+                {
+                    neighbor.Distance = current.Distance + 1;
+                    neighbor.PathFrom = current;
+                }
+
+                neighbor.UpdateDistanceLabel();
+
+                if (current.Distance <= cell.Occupant.MovementScale)
+                {
+                    hexes.Add(current);
+                }
             }
         }
+
         return hexes;
     }
 
-    /// <summary>
-    /// 计算移动距离
-    /// </summary>
-    /// <param name="cell"> 出发点 </param>
-    private void FindDistancesTo(HexCellMesh cell)
-    {
-        for (int i = 0; i < cells.Length; i++)
-        {
-            if (!cells[i].canbeDestination())
-                continue;
-
-            cells[i].Distance = cell.coordinates.DistanceTo(cells[i].coordinates);
-            cells[i].UpdateDistanceLabel();
-        }
-    }
     int FindDistance(HexCellMesh from, HexCellMesh to) {
         return from.coordinates.DistanceTo(to.coordinates); //不考虑障碍的直线距离
     }
@@ -350,7 +374,8 @@ public class HexGridManager : MonoBehaviour
     IEnumerator SearchPath(HexCellMesh fromCell, HexCellMesh toCell) {
         ClearPathHexes();
 
-        for (int i = 0; i < cells.Length; i++) {
+        for (int i = 0; i < cells.Length; i++)
+        {
             cells[i].Distance = int.MaxValue;
         }
         yield return null;
@@ -364,7 +389,7 @@ public class HexGridManager : MonoBehaviour
 
         while (frontiers.Count > 0) {
 
-            yield return null;  //方便观察
+            //yield return null;  //方便观察
 
             HexCellMesh current = frontiers[0];
             frontiers.RemoveAt(0);  // 出列
@@ -403,6 +428,10 @@ public class HexGridManager : MonoBehaviour
                 }
             }
         }
+
+        // 标记结束后发送可以开始移动的通知：
+        sendMovementOrder(fromCell, toCell);
+
     }
     void ClearPathHexes() {
         foreach (HexCellMesh c in pathHexes) {
@@ -423,6 +452,17 @@ public class HexGridManager : MonoBehaviour
             c.TransferToStatus(HexCellStatus.AVAILABLE);
         }
         movementRange.Clear();
+    }
+
+    void sendMovementOrder(HexCellMesh fromCell, HexCellMesh toCell) {
+        if (fromCell.Occupant == null)
+            return;
+        
+        if (toCell.Distance > fromCell.Occupant.MovementScale)
+            return;
+
+        fromCell.Occupant.moveByPath(ref pathHexes);
+        fromCell.ResetOccupant();
     }
 
 private void Update()

@@ -202,6 +202,11 @@ public class HexCellMesh : MonoBehaviour
         return 0;
     }
 
+    public void ResetOccupant() {
+        TransferToStatus(HexCellStatus.AVAILABLE);
+        occupant = null;
+    }
+
     /// <summary>
     /// 相邻棋格设置邻接表存储
     /// </summary>
@@ -213,9 +218,11 @@ public class HexCellMesh : MonoBehaviour
     }
     public void SetNeighbors(HexDirections direction, HexCellMesh cell)
     {
-        neighbors[(int)direction] = cell;
-        // 注意： 相邻关系是相互的
-        cell.neighbors[(int)direction.Opposite()] = this;
+        if (cell.status == HexCellStatus.AVAILABLE) {
+            neighbors[(int)direction] = cell;
+            // 注意： 相邻关系是相互的
+            cell.neighbors[(int)direction.Opposite()] = this;
+        }
     }
 
     /// <summary>
@@ -282,7 +289,6 @@ public class HexCellMesh : MonoBehaviour
         selectedHighlight.SetActive(false);
 
         lastStatus = status = HexCellStatus.AVAILABLE;
-
     }
     void enterAttackedStatus() { }
     void enterRescuedStatus() { }

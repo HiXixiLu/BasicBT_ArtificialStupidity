@@ -23,4 +23,8 @@ public static class CharacterLimits
     public const int PistolDamage = 20;
     public const int RiffleDamage = 35;
     public const int MeleeDamage = 50;
+
+    // 杂项数值
+    public const float movingTimeStep = 0.2f;  // in seconds
+
 }
