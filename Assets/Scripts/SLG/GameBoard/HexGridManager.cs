@@ -5,7 +5,7 @@ using UnityEngine;
 
 /* Xixi: 
  * 2019/8 月初建立
- * 2019/8/19  迟早要用有限状态机重构，或者拆分一个单独的状态机
+ * 2019/8/28  状态类可以与 Manager 解耦吗
  */
 public class HexGridManager : MonoBehaviour
 {
@@ -22,6 +22,8 @@ public class HexGridManager : MonoBehaviour
 
 
     public CharacterSpawner cSpawner;
+    public StateMachineUI stateMachineUI;
+    private GameStateContext gameStateContext;
 
     private void Awake()
     {
@@ -34,6 +36,8 @@ public class HexGridManager : MonoBehaviour
                 CreateCell(x, z, i++);
             }
         }
+
+        gameStateContext = new GameStateContext(this);  // 状态模式环境类初始化
 
     }
     private void Start()
@@ -92,7 +96,7 @@ public class HexGridManager : MonoBehaviour
         }
     }
 
-    private void HandleClick() {
+    public void HandleClick() {
         Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
         if (Physics.Raycast(inputRay, out hit)) {
@@ -100,8 +104,8 @@ public class HexGridManager : MonoBehaviour
             if (hit.transform.name.Contains("HexCellMesh")) {
                 HexCellMesh cell = hit.transform.GetComponent<HexCellMesh>();
 
-                // 选中棋子
-                if (cell.Occupant != null)
+                // 选中警察棋子
+                if (cell.Occupant.Name == CharacterLimits.policeName)
                 {
                     ClearPathHexes();
 
@@ -133,6 +137,7 @@ public class HexGridManager : MonoBehaviour
 
                     recolorClickedChunk(cell);
                 }
+                // 选中棋子时点击敌方棋子
             }
 
         }
@@ -465,13 +470,55 @@ public class HexGridManager : MonoBehaviour
         fromCell.ResetOccupant();
     }
 
+    /// <summary>
+    /// 扫描场面 Destoyer 方位和 避难所方位，综合得出逃窜方向
+    /// </summary>
+    /// <returns></returns>
+    HexDirections findRunningDirection() {
+        Debug.Log("Scanning");
+        // TODO: 这里需要综合考虑 destoyer 位置与 避难所位置得出最终的逃窜方向
+        return HexDirections.SE;    //test only
+    }
+    /// <summary>
+    /// 寻找特定方向的优先逃窜路径
+    /// </summary>
+    /// <returns></returns>
+    public List<HexCellMesh> FindEscapePath() {
+        HexDirections direction = findRunningDirection();
+        // TODO: 寻找往某个方向逃窜的路径
+
+        return new List<HexCellMesh>(); // test only
+    }
+    /// <summary>
+    /// 寻找通往最近目标的路径
+    /// </summary>
+    /// <returns></returns>
+    public List<HexCellMesh> FindNearTarget() {
+        // TODO: 寻找通往目标的路径
+
+        return new List<HexCellMesh>(); // test only
+    }
+
+    /// <summary>
+    /// 状态机的 UI 可视化
+    /// </summary>
+    public void TransferToPoliceRound() {
+        stateMachineUI.onPoliceRound();
+    }
+    public void TransferToDestroyerRound() {
+        stateMachineUI.onDestroyerRound();
+    }
+    public void TransferToCitizenRound() {
+        stateMachineUI.onCitizenRound();
+    }
+
 private void Update()
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            HandleClick();
-        }
+        //if (Input.GetMouseButtonDown(0))
+        //{
+        //    HandleClick();
+        //}
 
-        HandleMouseHover();
+        //HandleMouseHover();
     }
 }

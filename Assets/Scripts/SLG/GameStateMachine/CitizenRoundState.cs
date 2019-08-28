@@ -2,16 +2,74 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CitizenRoundState : IGameStates
+public class CitizenRoundState : GameStates
 {
-    public void onEntered()
-    {
-        throw new System.NotImplementedException();
-        
+    private CitizenRoundState instance;
+    public CitizenRoundState Instance {
+        get {
+            return instance;
+        }
     }
 
-    public void onExit()
+    private HexGridManager grid;
+    private List<CitizenDemo> citizens;
+    private GameStateContext context;
+
+    public CitizenRoundState(HexGridManager h, GameStateContext c) {
+        if (instance != null)
+            return;
+
+        grid = h;
+        instance = this;
+        citizens = grid.cSpawner.GetCitizens();
+        context = c;
+    }
+
+    public override void onEntered()
     {
-        throw new System.NotImplementedException();
+        grid.TransferToCitizenRound();
+
+        int movingUnits = 0;
+
+        // OHIRA模型 逃窜
+        runaway();
+
+        // 阻塞
+        while (movingUnits < citizens.Count) {
+            movingUnits = 0;
+            foreach (CitizenDemo c in citizens)
+            {
+                if (c.MovementDone == true)
+                    movingUnits += 1;
+            }
+        }
+
+        changeState();
+    }
+
+    /// <summary>
+    /// OHIRA逃窜模型 —— 远离敌人、靠近避难所的逃窜方向
+    /// </summary>
+    void runaway() {
+        Debug.Log("Running...");
+        
+        foreach (CitizenDemo c in citizens)
+        {
+            List<HexCellMesh> path = grid.FindEscapePath();
+            if (c.IsDown == false)
+            {
+                c.moveByPath(ref path);
+            }
+        }
+    }
+
+    public override void onExit()
+    {
+        //StopAllCoroutines();
+    }
+
+    public override void changeState()
+    {
+        context.changeState();
     }
 }

@@ -27,4 +27,9 @@ public static class CharacterLimits
     // 杂项数值
     public const float movingTimeStep = 0.2f;  // in seconds
 
+    // 杂项信息
+    public static string policeName = "police";
+    public static string destroyerName = "destroyer";
+    public static string citizenName = "citizen";
+
 }

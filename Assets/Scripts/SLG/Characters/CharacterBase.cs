@@ -5,11 +5,16 @@ using UnityEngine;
 public class CharacterBase : MonoBehaviour
 {
     protected Vector3 yOffset = new Vector3(0, 4, 0);    // 保持胶囊在地面上的偏移值
+    protected Vector3 yDownOffset = new Vector3(0, 2, 0);   // 保持胶囊躺倒的偏移值
+    
     int health;          // 生命
+    string name;
     int movementScale;   // 移动范围
     bool isDown = false; // 是否倒下
     int gunshot;
     int damage;
+    bool movementDone = false;
+
     public int Gunshot
     {
         get
@@ -63,6 +68,24 @@ public class CharacterBase : MonoBehaviour
                 health = value;
         }
     }
+    public bool MovementDone {
+        get {
+            return movementDone;
+        }
+        set {
+            movementDone = value;
+        }
+    }
+    public string NameSetter {
+        set {
+            name = value;
+        }
+    }
+    public string Name {
+        get {
+            return name;
+        }
+    }
 
     protected virtual void Awake() { }
 
@@ -76,6 +99,9 @@ public class CharacterBase : MonoBehaviour
         if (pathHexes[0].Distance > this.movementScale)
             return;
 
+        if (isDown == true)
+            return;
+
         StartCoroutine(moving(pathHexes));
     }
 
@@ -86,6 +112,7 @@ public class CharacterBase : MonoBehaviour
     /// <returns></returns>
     IEnumerator moving(List<HexCellMesh> pathHexes)
     {
+        movementDone = false;
 
         for (int i = pathHexes.Count - 1; i >= 0; i--)
         {
@@ -106,6 +133,9 @@ public class CharacterBase : MonoBehaviour
             transform.position = pathHexes[i].center + yOffset;
         }
         pathHexes[0].Occupant = this;
+
+        movementDone = true;
+
         // TODO: 必须确保移动期间不发生其他移动、互动等操作
     }
     /// <summary>
@@ -122,6 +152,32 @@ public class CharacterBase : MonoBehaviour
     public virtual void down() {
         this.health = -1;
         this.isDown = true;
+        this.movementDone = true;
+
+        this.transform.Rotate(new Vector3(90,0,0));
+        this.transform.position -= yDownOffset;
+    }
+
+    public virtual void beAttacked(int value)
+    {
+
+        if (Health > 0)
+        {
+            Health -= value;
+        }
+
+        if (Health <= 0)
+        {
+            down();
+        }
+    }
+
+    public virtual void beRescued(int value)
+    {
+        if (IsDown)
+            return;
+
+        Health = (Health + value) > CharacterLimits.HealthLimit ? CharacterLimits.HealthLimit : Health + value;
     }
 }
 

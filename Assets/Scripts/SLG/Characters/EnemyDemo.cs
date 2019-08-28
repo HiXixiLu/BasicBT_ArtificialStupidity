@@ -11,6 +11,7 @@ public class EnemyDemo : CharacterBase
         MovementScaleSetter = CharacterLimits.MeleeMovementScale;
         GunshotSetter = CharacterLimits.PistalGunshot;
         DamageSetter = CharacterLimits.PistolDamage;
+        NameSetter = CharacterLimits.destroyerName;
 
         base.Awake();
     }
@@ -30,30 +31,9 @@ public class EnemyDemo : CharacterBase
         }
     }
 
-    public void attack()
+    public void attack(CharacterBase opponent)
     {
-        // TODO: 怎样发动攻击
-    }
-
-    private void beAttacked(int value)
-    {
-
-        if (Health > 0)
-        {
-            Health -= value;
-        }
-
-        if (Health <= 0)
-        {
-            down();
-        }
-    }
-
-    private void beRescued(int value)
-    {
-        if (IsDown)
-            return;
-
-        Health = (Health + value) > CharacterLimits.HealthLimit ? CharacterLimits.HealthLimit : Health + value;
+        opponent.handleInteraction(characterInteraction.BE_ATTACKED, this.Damage);
+        // TODO: 增加动画
     }
 }

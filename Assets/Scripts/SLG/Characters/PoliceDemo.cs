@@ -10,6 +10,7 @@ public class PoliceDemo : CharacterBase
         MovementScaleSetter = CharacterLimits.MeleeMovementScale;
         GunshotSetter = CharacterLimits.PistalGunshot;
         DamageSetter = CharacterLimits.PistolDamage;
+        NameSetter = CharacterLimits.policeName;
 
         base.Awake();
     }
@@ -27,25 +28,8 @@ public class PoliceDemo : CharacterBase
         }
     }
 
-    public void attack() {
-        // TODO: 怎样发动攻击
-    }
-
-    private void beAttacked(int value) {
-
-        if (Health > 0) {
-            Health -= value;
-        }
-
-        if (Health <= 0) {
-            down();
-        }
-    }
-
-    private void beRescued(int value) {
-        if (IsDown)
-            return;
-
-        Health = (Health + value) > CharacterLimits.HealthLimit ? CharacterLimits.HealthLimit : Health + value;
+    public void attack(CharacterBase opponent) {
+        opponent.handleInteraction(characterInteraction.BE_ATTACKED, this.Damage);
+        // TODO: 增加动画
     }
 }

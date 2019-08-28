@@ -22,6 +22,20 @@ public class CharacterSpawner : MonoBehaviour
         DeployEnemies();
     }
 
+    /// <summary>
+    /// 三种返回某种类型棋子的方法
+    /// </summary>
+    /// <returns></returns>
+    public List<PoliceDemo> GetPolices() {
+        return polices;
+    }
+    public List<EnemyDemo> GetEnemies() {
+        return enemies;
+    }
+    public List<CitizenDemo> GetCitizens() {
+        return citizens;
+    }
+
     void DeployPolices() {
         foreach (int i in policeSpawners) {
             HexCellMesh cell = gridManager.cells[i];
@@ -49,4 +63,5 @@ public class CharacterSpawner : MonoBehaviour
             enemies.Add(e);
         }
     }
+
 }
