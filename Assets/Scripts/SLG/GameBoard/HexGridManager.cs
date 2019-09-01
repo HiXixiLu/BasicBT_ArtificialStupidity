@@ -13,7 +13,12 @@ public class HexGridManager : MonoBehaviour
     [SerializeField] public int height = 10;
 
     public HexCellMesh cellMeshPrefab;
-    public HexCellMesh[] cells; // TODO: 采用什么数据结构才能合理地管理各个棋格呢？
+    [SerializeField]HexCellMesh[] cells; // TODO: 采用什么数据结构才能合理地管理各个棋格呢？
+    public HexCellMesh[] Cells{
+        get {
+            return cells;
+        }
+    }
 
     HexCellMesh searchFromHex, selectedHex, lastHover;
     List<HexCellMesh> movementRange = new List<HexCellMesh>();
@@ -37,12 +42,12 @@ public class HexGridManager : MonoBehaviour
             }
         }
 
-        gameStateContext = new GameStateContext(this);  // 状态模式环境类初始化
-
     }
     private void Start()
     {
         cSpawner.InstantiateCharacters();
+        gameStateContext = new GameStateContext(this);  // 状态模式环境类初始化
+
     }
 
 
@@ -60,9 +65,8 @@ public class HexGridManager : MonoBehaviour
         cells[i].coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
         //cells[i].coordinates = new Hex2DCoordinates(x, z);
 
-        // 显示 坐标
-        cells[i].uiText.text = cells[i].coordinates.ToStringAxisCoordinate();
-        //cells[i].uiText.text = cells[i].coordinates.ToString();
+        // 显示索引 坐标
+        cells[i].uiText.text = cells[i].coordinates.ToString2DIndex();
 
         // 自东向西添加东西方向的邻居
         if (x > 0)

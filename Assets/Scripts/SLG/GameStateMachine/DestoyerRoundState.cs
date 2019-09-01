@@ -48,16 +48,16 @@ public class DestoyerRoundState : GameStates
             e.moveByPath(ref path);
         }
 
-        // 阻塞
-        while (movingUnits < destroyers.Count)
-        {
-            movingUnits = 0;
-            foreach (EnemyDemo e in destroyers)
-            {
-                if (e.MovementDone == true)
-                    movingUnits += 1;
-            }
-        }
+        // 阻塞 —— 因为模型没有实现，暂时阻塞
+        //while (movingUnits < destroyers.Count)
+        //{
+        //    movingUnits = 0;
+        //    foreach (EnemyDemo e in destroyers)
+        //    {
+        //        if (e.MovementDone == true)
+        //            movingUnits += 1;
+        //    }
+        //}
         changeState();
     }
 

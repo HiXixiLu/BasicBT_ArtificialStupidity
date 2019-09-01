@@ -28,21 +28,22 @@ public class CitizenRoundState : GameStates
     public override void onEntered()
     {
         grid.TransferToCitizenRound();
+        Debug.Log("Citizen Round Now !");
 
         int movingUnits = 0;
 
         // OHIRA模型 逃窜
-        runaway();
+        //runaway();
 
-        // 阻塞
-        while (movingUnits < citizens.Count) {
-            movingUnits = 0;
-            foreach (CitizenDemo c in citizens)
-            {
-                if (c.MovementDone == true)
-                    movingUnits += 1;
-            }
-        }
+        // 阻塞 —— 因为暂时没实现 OHIRA 模型而注掉
+        //while (movingUnits < citizens.Count) {
+        //    movingUnits = 0;
+        //    foreach (CitizenDemo c in citizens)
+        //    {
+        //        if (c.MovementDone == true)
+        //            movingUnits += 1;
+        //    }
+        //}
 
         changeState();
     }

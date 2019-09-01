@@ -6,6 +6,12 @@ public class CharacterBase : MonoBehaviour
 {
     protected Vector3 yOffset = new Vector3(0, 4, 0);    // 保持胶囊在地面上的偏移值
     protected Vector3 yDownOffset = new Vector3(0, 2, 0);   // 保持胶囊躺倒的偏移值
+
+    public delegate void EventCallback();   // 角色完成某个事件的回调
+    protected EventCallback movementCompleteCallback;
+    public void setEventCallback(EventCallback e) {
+        movementCompleteCallback = e;
+    }
     
     int health;          // 生命
     string name;
@@ -13,7 +19,6 @@ public class CharacterBase : MonoBehaviour
     bool isDown = false; // 是否倒下
     int gunshot;
     int damage;
-    bool movementDone = false;
 
     public int Gunshot
     {
@@ -68,14 +73,7 @@ public class CharacterBase : MonoBehaviour
                 health = value;
         }
     }
-    public bool MovementDone {
-        get {
-            return movementDone;
-        }
-        set {
-            movementDone = value;
-        }
-    }
+
     public string NameSetter {
         set {
             name = value;
@@ -112,7 +110,6 @@ public class CharacterBase : MonoBehaviour
     /// <returns></returns>
     IEnumerator moving(List<HexCellMesh> pathHexes)
     {
-        movementDone = false;
 
         for (int i = pathHexes.Count - 1; i >= 0; i--)
         {
@@ -134,8 +131,9 @@ public class CharacterBase : MonoBehaviour
         }
         pathHexes[0].Occupant = this;
 
-        movementDone = true;
-
+        if (movementCompleteCallback != null) {
+            movementCompleteCallback(); //可实现闭包吗
+        }
         // TODO: 必须确保移动期间不发生其他移动、互动等操作
     }
     /// <summary>
@@ -152,7 +150,6 @@ public class CharacterBase : MonoBehaviour
     public virtual void down() {
         this.health = -1;
         this.isDown = true;
-        this.movementDone = true;
 
         this.transform.Rotate(new Vector3(90,0,0));
         this.transform.position -= yDownOffset;

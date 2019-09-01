@@ -49,12 +49,18 @@ public struct HexCoordinates
     {
         return new HexCoordinates(x - z / 2, z);    // 行索引 x 的处理 —— 修正行偏移的同时，将整个坐标归入平面 x + y + z = 0 
     }
+    public KeyValuePair<int, int> Get2DIndex() {
+        return new KeyValuePair<int, int>(x + z / 2, z);    //返回其在二维数组里的列表值
+    }
     public override string ToString()
     {
         return "(" + X.ToString() + ", " + Y.ToString() + ", " + Z.ToString() + ")";
     }
     public string ToStringAxisCoordinate() {
         return "(" + X.ToString() + ", " + Z.ToString() + ")";
+    }
+    public string ToString2DIndex() {
+        return "(" + (X + Z / 2).ToString() + "," + Z.ToString() + ")";
     }
     public string ToStringOnSeparateLines()
     {

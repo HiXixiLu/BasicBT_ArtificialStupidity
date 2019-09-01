@@ -12,14 +12,18 @@ public class CharacterSpawner : MonoBehaviour
 
     [SerializeField] public List<int> policeSpawners;   // 暂保存cells里的索引值
     [SerializeField] public List<int> enemySpawners;
+    [SerializeField] public List<int> citizenSpawners;
 
     List<PoliceDemo> polices = new List<PoliceDemo>();
     List<EnemyDemo> enemies = new List<EnemyDemo>();
     List<CitizenDemo> citizens = new List<CitizenDemo>();
 
+    OhiraPlusModel ohira = OhiraPlusModel.Instance();
+
     public void InstantiateCharacters() {
         DeployPolices();
         DeployEnemies();
+        DeployCitizens();
     }
 
     /// <summary>
@@ -38,7 +42,7 @@ public class CharacterSpawner : MonoBehaviour
 
     void DeployPolices() {
         foreach (int i in policeSpawners) {
-            HexCellMesh cell = gridManager.cells[i];
+            HexCellMesh cell = gridManager.Cells[i];
             PoliceDemo p = Instantiate<PoliceDemo>(policePrefab);
             p.transform.SetParent(this.transform);
             p.transform.position += cell.transform.position;
@@ -52,7 +56,7 @@ public class CharacterSpawner : MonoBehaviour
     void DeployEnemies() {
         foreach (int i in enemySpawners)
         {
-            HexCellMesh cell = gridManager.cells[i];
+            HexCellMesh cell = gridManager.Cells[i];
             EnemyDemo e = Instantiate<EnemyDemo>(enemyPrefab);
             e.transform.SetParent(this.transform);
             e.transform.position += cell.transform.position;
@@ -61,6 +65,21 @@ public class CharacterSpawner : MonoBehaviour
             cell.TransferToStatus(HexCellStatus.OCCUPIED_AND_UNSELECTED);
 
             enemies.Add(e);
+        }
+    }
+    void DeployCitizens() {
+        foreach (int i in citizenSpawners) {
+            HexCellMesh cell = gridManager.Cells[i];
+            CitizenDemo c = Instantiate<CitizenDemo>(citizenPrefab);
+            c.transform.SetParent(this.transform);
+            c.transform.position += cell.transform.position;
+
+            c.setEventCallback(ohira.MovementCompletionCallback);   // 委托
+
+            cell.Occupant = c;
+            cell.TransferToStatus(HexCellStatus.OCCUPIED_AND_UNSELECTED);
+
+            citizens.Add(c);
         }
     }
 

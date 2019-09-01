@@ -29,7 +29,6 @@ public class GuardRoundState : GameStates
     public override void onEntered()
     {
         grid.TransferToPoliceRound();
-        guards = grid.cSpawner.GetPolices();
 
         Debug.Log("Police Round now!");
         updateSignal = true;
