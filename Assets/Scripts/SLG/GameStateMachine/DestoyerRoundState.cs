@@ -15,6 +15,8 @@ public class DestoyerRoundState : GameStates
     private List<EnemyDemo> destroyers;
     private GameStateContext context;
 
+    private int actionLimits = CharacterLimits.ActionLimit;
+
     public DestoyerRoundState(HexGridManager h, GameStateContext c) {
         if (instance != null)
             return;
@@ -23,47 +25,49 @@ public class DestoyerRoundState : GameStates
         instance = this;
         context = c;
         destroyers = grid.cSpawner.GetEnemies();
+
+        foreach (EnemyDemo e in destroyers) {
+            e.SetEventCallback(OnEventMovementCompletion);
+        }
     }
 
     public override void onEntered()
     {
         grid.TransferToDestroyerRound();
+        actionLimits = CharacterLimits.ActionLimit;
+        grid.ChangeActionsNum(actionLimits);
 
         Debug.Log("Destroyer Round Now !");
-        chaseCitizens();
+        foreach (EnemyDemo e in destroyers)
+        {
+            e.transform.GetComponent<Collider>().enabled = true;
+        }
+        
     }
 
     public override void onExit()
     {
         //StopAllCoroutines();
-    }
-
-    void chaseCitizens()
-    {
-        int movingUnits = 0;
-
         foreach (EnemyDemo e in destroyers)
         {
-            List<HexCellMesh> path = grid.FindNearTarget();
-            e.moveByPath(ref path);
+            e.transform.GetComponent<Collider>().enabled = false;
         }
-
-        // 阻塞 —— 因为模型没有实现，暂时阻塞
-        //while (movingUnits < destroyers.Count)
-        //{
-        //    movingUnits = 0;
-        //    foreach (EnemyDemo e in destroyers)
-        //    {
-        //        if (e.MovementDone == true)
-        //            movingUnits += 1;
-        //    }
-        //}
-        changeState();
     }
 
     public override void changeState()
     {
         context.changeState();
+    }
+
+    public void OnEventMovementCompletion()
+    {
+        if (actionLimits > 0)
+        {
+            actionLimits--;
+            grid.ChangeActionsNum(actionLimits);
+            if (actionLimits == 0)
+                changeState();
+        }
     }
 
     protected enum DestroyerStates {

@@ -9,9 +9,11 @@ public class CharacterBase : MonoBehaviour
 
     public delegate void EventCallback();   // 角色完成某个事件的回调
     protected EventCallback movementCompleteCallback;
-    public void setEventCallback(EventCallback e) {
+    public void SetEventCallback(EventCallback e) {
         movementCompleteCallback = e;
     }
+
+    public HexCellMesh Occupation;
     
     int health;          // 生命
     string name;
@@ -110,11 +112,14 @@ public class CharacterBase : MonoBehaviour
     /// <returns></returns>
     IEnumerator moving(List<HexCellMesh> pathHexes)
     {
+        List<HexCellMesh> path = new List<HexCellMesh>(pathHexes);  //防止引用被清空
+        pathHexes[0].Occupant = this;
+        this.Occupation = pathHexes[0];
 
-        for (int i = pathHexes.Count - 1; i >= 0; i--)
+        for (int i = path.Count - 1; i >= 0; i--)
         {
             Vector3 from = transform.position;
-            Vector3 to = pathHexes[i].center + yOffset;
+            Vector3 to = path[i].center + yOffset;
             float time = 0f;
             Vector3 mSpeed = (to - from) / CharacterLimits.movingTimeStep;
 
@@ -127,14 +132,13 @@ public class CharacterBase : MonoBehaviour
                 time += Time.deltaTime;
             }
 
-            transform.position = pathHexes[i].center + yOffset;
+            transform.position = path[i].center + yOffset;
         }
-        pathHexes[0].Occupant = this;
 
         if (movementCompleteCallback != null) {
-            movementCompleteCallback(); //可实现闭包吗
+            movementCompleteCallback();     // 委托 —— 可实现闭包
         }
-        // TODO: 必须确保移动期间不发生其他移动、互动等操作
+
     }
     /// <summary>
     /// 由当前 z 轴朝向与运动方向的 夹角，确定旋转

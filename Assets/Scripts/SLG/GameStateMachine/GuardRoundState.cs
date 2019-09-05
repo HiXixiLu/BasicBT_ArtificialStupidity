@@ -15,28 +15,40 @@ public class GuardRoundState : GameStates
     private GameStateContext context;
     private List<PoliceDemo> guards;
 
-    private bool updateSignal = false;
+    private int actionLimits = CharacterLimits.ActionLimit;
 
     public GuardRoundState(HexGridManager h, GameStateContext c) {
         if (instance != null)
             return;
+
         grid = h;
         instance = this;
         context = c;
         guards = grid.cSpawner.GetPolices();
+
+        foreach (PoliceDemo p in guards) {
+            p.SetEventCallback(OnEventMovementCompletion);  //通过委托调用实现了闭包
+        }
     }
 
     public override void onEntered()
     {
         grid.TransferToPoliceRound();
+        actionLimits = CharacterLimits.ActionLimit;
+        grid.ChangeActionsNum(actionLimits);
 
         Debug.Log("Police Round now!");
-        updateSignal = true;
+        foreach (PoliceDemo p in guards) {
+            p.transform.GetComponent<Collider>().enabled = true;
+        }
     }
 
     public override void onExit()
     {
-        updateSignal = false;
+        foreach (PoliceDemo p in guards)
+        {
+            p.transform.GetComponent<Collider>().enabled = false;
+        }
     }
 
     public override void changeState()
@@ -44,15 +56,12 @@ public class GuardRoundState : GameStates
         context.changeState();
     }
 
-    // 进行鼠标点击的射线检测
-    private void Update()
-    {
-        if (!updateSignal)
-            return;
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            // TODO: 这里要重写点击函数了
+    public void OnEventMovementCompletion() {
+        if (actionLimits > 0) {
+            actionLimits--;
+            grid.ChangeActionsNum(actionLimits);
+            if (actionLimits == 0)
+                changeState();
         }
     }
 

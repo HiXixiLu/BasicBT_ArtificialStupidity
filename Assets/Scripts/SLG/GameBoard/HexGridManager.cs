@@ -6,6 +6,7 @@ using UnityEngine;
 /* Xixi: 
  * 2019/8 月初建立
  * 2019/8/28  状态类可以与 Manager 解耦吗
+ * 2019/9/4  其实这个类更多的应该是管理和改变棋格类
  */
 public class HexGridManager : MonoBehaviour
 {
@@ -13,7 +14,7 @@ public class HexGridManager : MonoBehaviour
     [SerializeField] public int height = 10;
 
     public HexCellMesh cellMeshPrefab;
-    [SerializeField]HexCellMesh[] cells; // TODO: 采用什么数据结构才能合理地管理各个棋格呢？
+    [SerializeField]private HexCellMesh[] cells;
     public HexCellMesh[] Cells{
         get {
             return cells;
@@ -50,6 +51,9 @@ public class HexGridManager : MonoBehaviour
 
     }
 
+    public StateId GetCurrentGameState() {
+        return gameStateContext.State;
+    }
 
     private void CreateCell(int x, int z, int i) {
         Vector3 position;
@@ -109,7 +113,7 @@ public class HexGridManager : MonoBehaviour
                 HexCellMesh cell = hit.transform.GetComponent<HexCellMesh>();
 
                 // 选中警察棋子
-                if (cell.Occupant.Name == CharacterLimits.policeName)
+                if (cell.Occupant != null && cell.Occupant.Name == CharacterLimits.policeName)
                 {
                     ClearPathHexes();
 
@@ -122,7 +126,7 @@ public class HexGridManager : MonoBehaviour
                     recolorClickedChunk(cell);
                 }
                 // 选中棋子后点击空闲格子
-                else if(searchFromHex != null && cell != searchFromHex)
+                if(searchFromHex != null && cell != searchFromHex)
                 {
                     recolorClickedChunk(cell);
 
@@ -135,31 +139,50 @@ public class HexGridManager : MonoBehaviour
                 }
                 // 未选中棋子时点击空闲格子
                 else if (searchFromHex == null && cell.Occupant == null) {
-                    ClearPathHexes();
-                    ClearMovementRange();
-                    ClearHoverNeighbors();
-
-                    recolorClickedChunk(cell);
+                    onSingleClickToAvailableHex(cell);
                 }
                 // 选中棋子时点击敌方棋子
             }
 
         }
     }
-    private void HandleMouseHover() {
-        if (searchFromHex == null)
-            return;
 
-        Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-        if (Physics.Raycast(mouseRay, out hit))
+    public void onSingleClickToAvailableHex(HexCellMesh cell) {
+        ClearPathHexes();
+        ClearMovementRange();
+        ClearHoverNeighbors();
+
+        if (cell.Occupant != null)
         {
-            if (hit.transform.name.Contains("HexCellMesh"))
-            {
-                //Debug.Log("悬停检测" + hit.transform.GetComponent<HexCellMesh>().coordinates.ToStringAxisCoordinate());
-                recolorHoverChunk(hit.transform.GetComponent<HexCellMesh>());
-            }
+            onSingleClickToCharactor(cell.Occupant);
         }
+        else {
+            recolorClickedHex(cell);
+        }
+
+    }
+    public void onClickToSearch(HexCellMesh from, HexCellMesh to) {
+        recolorClickedChunk(to);
+
+        from.TransferToStatus(HexCellStatus.OCCUPIED_AND_SELECTED);
+        MarkPath(from, to);
+
+        ClearHoverNeighbors();
+        from.TransferToStatus(HexCellStatus.OCCUPIED_AND_UNSELECTED);
+
+    }
+    public void onSingleClickToCharactor(CharacterBase avatar) {
+        ClearPathHexes();
+        if (GetCurrentGameState() == StateId.CITIZENS)
+            return;
+        else if ((GetCurrentGameState() == StateId.DESTOYER && avatar.Name == CharacterLimits.destroyerName)
+            || (GetCurrentGameState() == StateId.GUARD && avatar.Name == CharacterLimits.policeName)) {
+
+            recolorClickedChunk(avatar.Occupation);
+            Debug.Log("Update hovered range from center: " + avatar.Occupation.coordinates.ToString2DIndex());
+            recolorCharacterGunshot(avatar);
+        }
+                    
     }
 
     /// <summary>
@@ -184,18 +207,17 @@ public class HexGridManager : MonoBehaviour
     /// 更新鼠标悬停棋格的颜色
     /// </summary>
     /// <param name="cell"></param>
-    private void moniterMouseHover(HexCellMesh cell)
-    {
-        if (lastHover != null && lastHover != cell) {
-            lastHover.GoBackLastStatus();
-        }
-        if (searchFromHex != null && searchFromHex != cell) {
-            cell.TransferToStatus(HexCellStatus.DESTINATION_HOVER);
-        }
-        lastHover = cell;
+    //private void moniterMouseHover(HexCellMesh cell)
+    //{
+    //    if (lastHover != null && lastHover != cell) {
+    //        lastHover.GoBackLastStatus();
+    //    }
+    //    if (searchFromHex != null && searchFromHex != cell) {
+    //        cell.TransferToStatus(HexCellStatus.DESTINATION_HOVER);
+    //    }
+    //    lastHover = cell;
 
-        // TODO: 当鼠标悬停处于范围内时才高亮
-    }
+    //}
 
     /// <summary>
     /// 给一定范围内的 Hex 上色
@@ -216,19 +238,11 @@ public class HexGridManager : MonoBehaviour
         }
 
     }
-    private void recolorHoverChunk(HexCellMesh cell) {
-        int range;
-        if (searchFromHex != null)
-            range = searchFromHex.Occupant.Gunshot;
-        else
-            range = 0;
-
+    private void recolorCharacterGunshot(CharacterBase avatar) {
+        int range = avatar.Gunshot;
         ClearHoverNeighbors();
 
-        moniterMouseHover(cell);
- 
-        // Clear 和 setter 需要成对出现吗？
-        HoveredNeighbors = findNeighbors(cell.coordinates, range);
+        HoveredNeighbors = findNeighbors(avatar.Occupation.coordinates, range);
         foreach (HexCellMesh c in HoveredNeighbors)
         {
             c.TransferToStatus(HexCellStatus.IN_GUNSHOT);
@@ -515,14 +529,8 @@ public class HexGridManager : MonoBehaviour
     public void TransferToCitizenRound() {
         stateMachineUI.onCitizenRound();
     }
-
-private void Update()
-    {
-        //if (Input.GetMouseButtonDown(0))
-        //{
-        //    HandleClick();
-        //}
-
-        //HandleMouseHover();
+    public void ChangeActionsNum(int num) {
+        stateMachineUI.SetActionsNum(num);
     }
+
 }

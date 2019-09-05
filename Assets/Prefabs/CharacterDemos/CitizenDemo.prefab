@@ -89,6 +89,7 @@ GameObject:
   - component: {fileID: 2822097416245137524}
   - component: {fileID: 2822097416245137523}
   - component: {fileID: 2822097416245137521}
+  - component: {fileID: 7772767129146092448}
   m_Layer: 0
   m_Name: CitizenDemo
   m_TagString: Untagged
@@ -168,6 +169,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af291835a86d93b4aa809dfe8a16d624, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: 0
-  movementScale: 0
-  isDown: 0
+  Occupation: {fileID: 0}
+--- !u!136 &7772767129146092448
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2822097416245137519}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}

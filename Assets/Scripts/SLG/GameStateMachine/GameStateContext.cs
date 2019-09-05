@@ -5,6 +5,11 @@ using UnityEngine;
 public class GameStateContext
 {
     private StateId state;
+    public StateId State {
+        get {
+            return state;
+        }
+    }
     Dictionary<StateId, GameStates> statesDict;  // 组合关系
 
     private GameStateContext instance;
@@ -48,9 +53,9 @@ public class GameStateContext
 
         statesDict[state].onEntered();
     }
+}
 
-    enum StateId
-    {
-        GUARD, CITIZENS, DESTOYER
-    }
+public enum StateId
+{
+    GUARD, CITIZENS, DESTOYER
 }

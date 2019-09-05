@@ -9,9 +9,9 @@ public static class CharacterLimits
 {
     // 生理数值
     public const int HealthLimit = 100;
-    public const int MovementScaleLimit = 10;
-    public const int MeleeMovementScale = 4;
-    public const int ArcherMovementScale = 6;
+    public const int MovementScaleLimit = 8;
+    public const int MeleeMovementScale = 6;
+    public const int ArcherMovementScale = 8;
 
     // 道具数值
     public const int PistalGunshot = 3;
@@ -26,6 +26,7 @@ public static class CharacterLimits
 
     // 杂项数值
     public const float movingTimeStep = 0.2f;  // in seconds
+    public const int ActionLimit = 5;
 
     // 杂项信息
     public static string policeName = "police";

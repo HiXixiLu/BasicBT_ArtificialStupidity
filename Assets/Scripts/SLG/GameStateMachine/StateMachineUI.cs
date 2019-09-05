@@ -8,6 +8,7 @@ public class StateMachineUI : MonoBehaviour
     public Text citizen;
     public Text destroyer;
     public Text police;
+    public Text ActionsNum;
 
     void resetTextColor() {
         citizen.color = Color.black;
@@ -25,5 +26,9 @@ public class StateMachineUI : MonoBehaviour
     public void onDestroyerRound() {
         resetTextColor();
         destroyer.color = Color.green;
+    }
+
+    public void SetActionsNum(int num) {
+        ActionsNum.text = num.ToString();
     }
 }

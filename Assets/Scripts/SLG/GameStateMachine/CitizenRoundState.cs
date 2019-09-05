@@ -32,6 +32,7 @@ public class CitizenRoundState : GameStates
 
         int movingUnits = 0;
 
+        // 接收网络的请求以更新 citizen 的位置
         // OHIRA模型 逃窜
         //runaway();
 
