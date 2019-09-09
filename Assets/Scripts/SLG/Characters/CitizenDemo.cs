@@ -6,9 +6,9 @@ public class CitizenDemo : CharacterBase
 {
     private void Awake()
     {
-        Health = CharacterLimits.HealthLimit;
-        MovementScaleSetter = CharacterLimits.ArcherMovementScale;
-        NameSetter = CharacterLimits.citizenName;
+        Health = ValueBoundary.HealthLimit;
+        MovementScaleSetter = ValueBoundary.ArcherMovementScale;
+        NameSetter = ValueBoundary.citizenName;
 
         base.Awake();
     }

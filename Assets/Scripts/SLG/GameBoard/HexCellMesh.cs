@@ -68,6 +68,14 @@ public class HexCellMesh : MonoBehaviour
             pathFrom = value;
         }
     }
+    // 启发式函数所用的估计值
+    public int SearchHeuristic { get; set; }
+    public int SearchPriority {
+        get {
+            return distance + SearchHeuristic;
+        }
+    }
+    public HexCellMesh NextWithSamePriority { get; set; }
 
     CharacterBase occupant;     // 保存占据该棋格的棋子
     public CharacterBase Occupant {

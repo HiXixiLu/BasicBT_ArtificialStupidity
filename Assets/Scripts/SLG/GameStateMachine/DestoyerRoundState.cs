@@ -15,7 +15,7 @@ public class DestoyerRoundState : GameStates
     private List<EnemyDemo> destroyers;
     private GameStateContext context;
 
-    private int actionLimits = CharacterLimits.ActionLimit;
+    private int actionLimits = ValueBoundary.ActionLimit;
 
     public DestoyerRoundState(HexGridManager h, GameStateContext c) {
         if (instance != null)
@@ -34,7 +34,7 @@ public class DestoyerRoundState : GameStates
     public override void onEntered()
     {
         grid.TransferToDestroyerRound();
-        actionLimits = CharacterLimits.ActionLimit;
+        actionLimits = ValueBoundary.ActionLimit;
         grid.ChangeActionsNum(actionLimits);
 
         Debug.Log("Destroyer Round Now !");

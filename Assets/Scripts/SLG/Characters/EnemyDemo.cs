@@ -7,11 +7,11 @@ public class EnemyDemo : CharacterBase
     // 基础属性
     protected override void Awake()
     {
-        Health = CharacterLimits.HealthLimit;
-        MovementScaleSetter = CharacterLimits.MeleeMovementScale;
-        GunshotSetter = CharacterLimits.PistalGunshot;
-        DamageSetter = CharacterLimits.PistolDamage;
-        NameSetter = CharacterLimits.destroyerName;
+        Health = ValueBoundary.HealthLimit;
+        MovementScaleSetter = ValueBoundary.MeleeMovementScale;
+        GunshotSetter = ValueBoundary.PistalGunshot;
+        DamageSetter = ValueBoundary.PistolDamage;
+        NameSetter = ValueBoundary.destroyerName;
 
         base.Awake();
     }

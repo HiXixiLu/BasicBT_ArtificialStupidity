@@ -15,7 +15,7 @@ public class GuardRoundState : GameStates
     private GameStateContext context;
     private List<PoliceDemo> guards;
 
-    private int actionLimits = CharacterLimits.ActionLimit;
+    private int actionLimits = ValueBoundary.ActionLimit;
 
     public GuardRoundState(HexGridManager h, GameStateContext c) {
         if (instance != null)
@@ -34,7 +34,7 @@ public class GuardRoundState : GameStates
     public override void onEntered()
     {
         grid.TransferToPoliceRound();
-        actionLimits = CharacterLimits.ActionLimit;
+        actionLimits = ValueBoundary.ActionLimit;
         grid.ChangeActionsNum(actionLimits);
 
         Debug.Log("Police Round now!");

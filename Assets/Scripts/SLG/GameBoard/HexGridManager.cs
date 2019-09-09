@@ -26,6 +26,8 @@ public class HexGridManager : MonoBehaviour
     List<HexCellMesh> HoveredNeighbors = new List<HexCellMesh>();
     List<HexCellMesh> pathHexes = new List<HexCellMesh>();
 
+    HexCellPriorityQueue searchFrontier = new HexCellPriorityQueue();    //自定义的优先队列
+
 
     public CharacterSpawner cSpawner;
     public StateMachineUI stateMachineUI;
@@ -113,7 +115,7 @@ public class HexGridManager : MonoBehaviour
                 HexCellMesh cell = hit.transform.GetComponent<HexCellMesh>();
 
                 // 选中警察棋子
-                if (cell.Occupant != null && cell.Occupant.Name == CharacterLimits.policeName)
+                if (cell.Occupant != null && cell.Occupant.Name == ValueBoundary.policeName)
                 {
                     ClearPathHexes();
 
@@ -175,8 +177,8 @@ public class HexGridManager : MonoBehaviour
         ClearPathHexes();
         if (GetCurrentGameState() == StateId.CITIZENS)
             return;
-        else if ((GetCurrentGameState() == StateId.DESTOYER && avatar.Name == CharacterLimits.destroyerName)
-            || (GetCurrentGameState() == StateId.GUARD && avatar.Name == CharacterLimits.policeName)) {
+        else if ((GetCurrentGameState() == StateId.DESTOYER && avatar.Name == ValueBoundary.destroyerName)
+            || (GetCurrentGameState() == StateId.GUARD && avatar.Name == ValueBoundary.policeName)) {
 
             recolorClickedChunk(avatar.Occupation);
             Debug.Log("Update hovered range from center: " + avatar.Occupation.coordinates.ToString2DIndex());
@@ -320,7 +322,7 @@ public class HexGridManager : MonoBehaviour
         return neighbors;
     }
     /// <summary>
-    /// 寻找某个格子上棋子的可移动范围 —— 与寻路算法实际上进行了重复的计算
+    /// 寻找某个格子上棋子的可移动范围 —— 与寻路算法实际上进行了重复的距离计算
     /// </summary>
     /// <param name="cell"></param>
     /// <returns></returns>
@@ -393,7 +395,13 @@ public class HexGridManager : MonoBehaviour
         StopAllCoroutines();
         StartCoroutine(SearchPath(fromCell, toCell));
     }
-    // Dijkstra Algorithm
+
+    // A* algorithm —— 启发式搜索
+    // If we want to be smart about this, we also have to consider the distance to the destination.
+    // we could make an estimate of the remaining distance. 
+    // A* 算法在无权值地形上并无优势
+    // 去掉启发函数，就成了 Dijkstra Algorithm 的形式
+    // 经实验可在图形化界面看出来 —— 对 frontier 排序减少了待搜索空间
     IEnumerator SearchPath(HexCellMesh fromCell, HexCellMesh toCell) {
         ClearPathHexes();
 
@@ -402,20 +410,24 @@ public class HexGridManager : MonoBehaviour
             cells[i].Distance = int.MaxValue;
         }
         yield return null;
-        List<HexCellMesh> frontiers = new List<HexCellMesh>();
+        //List<HexCellMesh> frontiers = new List<HexCellMesh>();
+        searchFrontier.Clear();
+
         fromCell.Distance = 0;
 
         toCell.TransferToStatus(HexCellStatus.PATH_HIGHLIGHT);
         pathHexes.Add(toCell);
 
-        frontiers.Add(fromCell);
+        //frontiers.Add(fromCell);
+        searchFrontier.Enqueue(fromCell);
 
-        while (frontiers.Count > 0) {
+        while (searchFrontier.Count > 0) {
 
             //yield return null;  //方便观察
 
-            HexCellMesh current = frontiers[0];
-            frontiers.RemoveAt(0);  // 出列
+            //HexCellMesh current = frontiers[0];
+            //frontiers.RemoveAt(0);  // 出列
+            HexCellMesh current = searchFrontier.Dequeue();
 
             if (current == toCell)
             {
@@ -442,12 +454,17 @@ public class HexGridManager : MonoBehaviour
                 {
                     neighbor.Distance = current.Distance + 1;
                     neighbor.PathFrom = current;
-                    frontiers.Add(neighbor);
+                    neighbor.SearchHeuristic = neighbor.coordinates.DistanceTo(toCell.coordinates); //设定启发值 —— 初始启发值为直线距离
+                    //frontiers.Add(neighbor);
+                    searchFrontier.Enqueue(neighbor);
+                    //frontiers.Sort((x,y) => x.SearchPriority.CompareTo(y.SearchPriority));  //重排搜索优先级
                 }
                 // 若已处理过
                 else if (current.Distance + 1 < neighbor.Distance) {
+                    int oldPriority = neighbor.SearchPriority;
                     neighbor.Distance = current.Distance + 1;
                     neighbor.PathFrom = current;
+                    searchFrontier.Change(neighbor, oldPriority);
                 }
             }
         }
@@ -456,6 +473,16 @@ public class HexGridManager : MonoBehaviour
         sendMovementOrder(fromCell, toCell);
 
     }
+    /// <summary>
+    /// 使用自实现的优先队列对 SearchPath 里的 A* 算法做一个优化
+    /// </summary>
+    /// <param name="fromCell"></param>
+    /// <param name="toCell"></param>
+    /// <returns></returns>
+    IEnumerator SearchPathWithPriorityQueue(HexCellMesh fromCell, HexCellMesh toCell) {
+        yield return null;
+    }
+
     void ClearPathHexes() {
         foreach (HexCellMesh c in pathHexes) {
             c.TransferToStatus(HexCellStatus.AVAILABLE);
@@ -486,35 +513,6 @@ public class HexGridManager : MonoBehaviour
 
         fromCell.Occupant.moveByPath(ref pathHexes);
         fromCell.ResetOccupant();
-    }
-
-    /// <summary>
-    /// 扫描场面 Destoyer 方位和 避难所方位，综合得出逃窜方向
-    /// </summary>
-    /// <returns></returns>
-    HexDirections findRunningDirection() {
-        Debug.Log("Scanning");
-        // TODO: 这里需要综合考虑 destoyer 位置与 避难所位置得出最终的逃窜方向
-        return HexDirections.SE;    //test only
-    }
-    /// <summary>
-    /// 寻找特定方向的优先逃窜路径
-    /// </summary>
-    /// <returns></returns>
-    public List<HexCellMesh> FindEscapePath() {
-        HexDirections direction = findRunningDirection();
-        // TODO: 寻找往某个方向逃窜的路径
-
-        return new List<HexCellMesh>(); // test only
-    }
-    /// <summary>
-    /// 寻找通往最近目标的路径
-    /// </summary>
-    /// <returns></returns>
-    public List<HexCellMesh> FindNearTarget() {
-        // TODO: 寻找通往目标的路径
-
-        return new List<HexCellMesh>(); // test only
     }
 
     /// <summary>

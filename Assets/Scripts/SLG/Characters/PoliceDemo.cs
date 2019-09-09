@@ -6,11 +6,11 @@ public class PoliceDemo : CharacterBase
 {
     protected override void Awake()
     {
-        Health = CharacterLimits.HealthLimit;
-        MovementScaleSetter = CharacterLimits.MeleeMovementScale;
-        GunshotSetter = CharacterLimits.PistalGunshot;
-        DamageSetter = CharacterLimits.PistolDamage;
-        NameSetter = CharacterLimits.policeName;
+        Health = ValueBoundary.HealthLimit;
+        MovementScaleSetter = ValueBoundary.MeleeMovementScale;
+        GunshotSetter = ValueBoundary.PistalGunshot;
+        DamageSetter = ValueBoundary.PistolDamage;
+        NameSetter = ValueBoundary.policeName;
 
         base.Awake();
     }

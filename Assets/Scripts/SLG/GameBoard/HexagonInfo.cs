@@ -103,6 +103,7 @@ public struct HexCoordinates
         return new HexCoordinates(iX, iZ);
     }
 
+    // 曼哈顿距离 —— 其中 z 的值是修正值？
     public int DistanceTo(HexCoordinates cell) {
         int d = (Mathf.Abs(X - cell.X) + Mathf.Abs(Y - cell.Y) + Mathf.Abs(Z - cell.Z)) / 2;
         return d;

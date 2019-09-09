@@ -69,8 +69,8 @@ public class CharacterBase : MonoBehaviour
             return health;
         }
         set {
-            if (health + value >= CharacterLimits.HealthLimit)
-                health = CharacterLimits.HealthLimit;
+            if (health + value >= ValueBoundary.HealthLimit)
+                health = ValueBoundary.HealthLimit;
             else
                 health = value;
         }
@@ -121,11 +121,11 @@ public class CharacterBase : MonoBehaviour
             Vector3 from = transform.position;
             Vector3 to = path[i].center + yOffset;
             float time = 0f;
-            Vector3 mSpeed = (to - from) / CharacterLimits.movingTimeStep;
+            Vector3 mSpeed = (to - from) / ValueBoundary.movingTimeStep;
 
-            //rotateToSpeedDirection(from, to);
+            //rotateToDirection(path[i]);   // bug： 有闪出运动路径的问题出现
 
-            while (time < CharacterLimits.movingTimeStep)
+            while (time < ValueBoundary.movingTimeStep)
             {
                 yield return null;
                 transform.Translate(mSpeed * Time.deltaTime);
@@ -140,15 +140,16 @@ public class CharacterBase : MonoBehaviour
         }
 
     }
+
     /// <summary>
-    /// 由当前 z 轴朝向与运动方向的 夹角，确定旋转
+    /// 将棋子以一定角速度旋转朝向某个方向
     /// </summary>
-    /// <param name="from"> 出发方格 </param>
-    /// <param name="to"> 目的方格 </param>
-    /// <returns></returns>
-    private void rotateToSpeedDirection(Vector3 from, Vector3 to) {
-        Vector3 vectorSpeed = (to - from).normalized;
-        transform.forward = vectorSpeed;    // TODO: 旋转有 bug
+    /// <param name="direction"></param>
+    void rotateToDirection(HexCellMesh desCell) {
+        Vector3 direction = desCell.transform.position + yOffset - this.transform.position;
+        float angle = Vector3.Angle(this.transform.forward, direction);
+
+        transform.localRotation = Quaternion.Euler(0f, angle, 0f);
     }
 
     public virtual void down() {
@@ -178,7 +179,7 @@ public class CharacterBase : MonoBehaviour
         if (IsDown)
             return;
 
-        Health = (Health + value) > CharacterLimits.HealthLimit ? CharacterLimits.HealthLimit : Health + value;
+        Health = (Health + value) > ValueBoundary.HealthLimit ? ValueBoundary.HealthLimit : Health + value;
     }
 }
 

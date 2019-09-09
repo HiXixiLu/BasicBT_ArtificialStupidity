@@ -55,14 +55,6 @@ public class CitizenRoundState : GameStates
     void runaway() {
         Debug.Log("Running...");
         
-        foreach (CitizenDemo c in citizens)
-        {
-            List<HexCellMesh> path = grid.FindEscapePath();
-            if (c.IsDown == false)
-            {
-                c.moveByPath(ref path);
-            }
-        }
     }
 
     public override void onExit()
