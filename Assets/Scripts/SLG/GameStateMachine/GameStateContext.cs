@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class GameStateContext
 {
+    public int actionLimit = ValueBoundary.ActionLimit; //每回合的行动点
+    public HexGridManager grid;
+
     private StateId state;
     public StateId State {
         get {
@@ -24,10 +27,11 @@ public class GameStateContext
             return;
 
         statesDict = new Dictionary<StateId, GameStates>();
+        grid = h;
 
-        statesDict.Add(StateId.GUARD, new GuardRoundState(h, this));
-        statesDict.Add(StateId.DESTOYER, new DestoyerRoundState(h, this));
-        statesDict.Add(StateId.CITIZENS, new CitizenRoundState(h, this));
+        statesDict.Add(StateId.GUARD, new GuardRoundState(this));
+        statesDict.Add(StateId.DESTOYER, new DestoyerRoundState(this));
+        statesDict.Add(StateId.CITIZENS, new CitizenRoundState(this));
 
         state = StateId.CITIZENS;
         statesDict[state].onEntered();
@@ -37,6 +41,8 @@ public class GameStateContext
     
     public void changeState() {
         statesDict[state].onExit();
+
+        actionLimit = ValueBoundary.ActionLimit;    // 重置行动点;
 
         if (state == StateId.CITIZENS)
         {
@@ -52,6 +58,20 @@ public class GameStateContext
         }
 
         statesDict[state].onEntered();
+    }
+
+    public void OnEventAttackCompletion() {
+        if (actionLimit > 0)
+        {
+            actionLimit--;
+            grid.ChangeActionsNum(actionLimit);
+
+            if (actionLimit == 0)
+                changeState();
+        }
+        else {
+            changeState();
+        }
     }
 }
 

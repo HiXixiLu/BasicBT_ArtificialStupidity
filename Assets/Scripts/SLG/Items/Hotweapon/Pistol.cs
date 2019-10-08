@@ -10,7 +10,15 @@ public class Pistol : Guns
         GunshotSetter = ValueBoundary.PistalGunshot;
     }
 
+    // 在鼠标移动的过程中，
     public override void Attack(Vector3 direction) {
-        // TODO: 按某个方向攻击
+        if (Ammos > 0)
+        {
+            // TODO: 动画
+            AmmosSetter = Ammos - 1;
+        }
+        else {
+            AmmosSetter = 0;
+        }
     }
 }

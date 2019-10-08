@@ -11,20 +11,16 @@ public class GuardRoundState : GameStates
         }
     }
 
-    private HexGridManager grid;
     private GameStateContext context;
     private List<PoliceDemo> guards;
 
-    private int actionLimits = ValueBoundary.ActionLimit;
-
-    public GuardRoundState(HexGridManager h, GameStateContext c) {
+    public GuardRoundState( GameStateContext c) {
         if (instance != null)
             return;
 
-        grid = h;
         instance = this;
         context = c;
-        guards = grid.cSpawner.GetPolices();
+        guards = context.grid.cSpawner.GetPolices();
 
         foreach (PoliceDemo p in guards) {
             p.SetEventCallback(OnEventMovementCompletion);  //通过委托调用实现了闭包
@@ -33,9 +29,9 @@ public class GuardRoundState : GameStates
 
     public override void onEntered()
     {
-        grid.TransferToPoliceRound();
-        actionLimits = ValueBoundary.ActionLimit;
-        grid.ChangeActionsNum(actionLimits);
+        context.grid.TransferToPoliceRound();
+        context.actionLimit = ValueBoundary.ActionLimit;
+        context.grid.ChangeActionsNum(context.actionLimit);
 
         Debug.Log("Police Round now!");
         foreach (PoliceDemo p in guards) {
@@ -57,10 +53,10 @@ public class GuardRoundState : GameStates
     }
 
     public void OnEventMovementCompletion() {
-        if (actionLimits > 0) {
-            actionLimits--;
-            grid.ChangeActionsNum(actionLimits);
-            if (actionLimits == 0)
+        if (context.actionLimit > 0) {
+            context.actionLimit--;
+            context.grid.ChangeActionsNum(context.actionLimit);
+            if (context.actionLimit == 0)
                 changeState();
         }
     }

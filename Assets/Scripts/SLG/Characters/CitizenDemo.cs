@@ -20,9 +20,9 @@ public class CitizenDemo : CharacterBase
             case characterInteraction.BE_ATTACKED:
                 beAttacked(value);
                 break;
-            case characterInteraction.BE_RESCUED:
-                beRescued(value);
-                break;
+            //case characterInteraction.BE_RESCUED:
+            //    beRescued(value);
+            //    break;
             default:
                 break;
         }

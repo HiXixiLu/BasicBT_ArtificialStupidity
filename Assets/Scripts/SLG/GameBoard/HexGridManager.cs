@@ -56,7 +56,12 @@ public class HexGridManager : MonoBehaviour
     public StateId GetCurrentGameState() {
         return gameStateContext.State;
     }
-
+    /// <summary>
+    /// 创建场上的棋盘
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="z"></param>
+    /// <param name="i"></param>
     private void CreateCell(int x, int z, int i) {
         Vector3 position;
 
@@ -149,6 +154,10 @@ public class HexGridManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 点击未占据棋格
+    /// </summary>
+    /// <param name="cell"></param>
     public void onSingleClickToAvailableHex(HexCellMesh cell) {
         ClearPathHexes();
         ClearMovementRange();
@@ -163,6 +172,11 @@ public class HexGridManager : MonoBehaviour
         }
 
     }
+    /// <summary>
+    /// 寻路以及标记结果
+    /// </summary>
+    /// <param name="from"></param>
+    /// <param name="to"></param>
     public void onClickToSearch(HexCellMesh from, HexCellMesh to) {
         recolorClickedChunk(to);
 
@@ -173,6 +187,10 @@ public class HexGridManager : MonoBehaviour
         from.TransferToStatus(HexCellStatus.OCCUPIED_AND_UNSELECTED);
 
     }
+    /// <summary>
+    /// 点击角色
+    /// </summary>
+    /// <param name="avatar"></param>
     public void onSingleClickToCharactor(CharacterBase avatar) {
         ClearPathHexes();
         if (GetCurrentGameState() == StateId.CITIZENS)
@@ -240,19 +258,20 @@ public class HexGridManager : MonoBehaviour
         }
 
     }
+    // TODO: 该函数可用于计算 射程内/互动范围内的单位用
     private void recolorCharacterGunshot(CharacterBase avatar) {
-        int range = avatar.Gunshot;
-        ClearHoverNeighbors();
+        //int range = avatar.Gunshot;
+        //ClearHoverNeighbors();
 
-        HoveredNeighbors = findNeighbors(avatar.Occupation.coordinates, range);
-        foreach (HexCellMesh c in HoveredNeighbors)
-        {
-            c.TransferToStatus(HexCellStatus.IN_GUNSHOT);
-        }
+        //HoveredNeighbors = findNeighbors(avatar.Occupation.coordinates, range);
+        //foreach (HexCellMesh c in HoveredNeighbors)
+        //{
+        //    c.TransferToStatus(HexCellStatus.IN_GUNSHOT);
+        //}
     }
 
     /// <summary>
-    /// range = 3, 则寻找距离3格以内的邻居
+    /// 寻找距离 range 格以内的邻居
     /// </summary>
     /// <param name="pos"></param>
     /// <param name="range"></param>
@@ -385,6 +404,62 @@ public class HexGridManager : MonoBehaviour
     int FindDistance(HexCellMesh from, HexCellMesh to) {
         return from.coordinates.DistanceTo(to.coordinates); //不考虑障碍的直线距离
     }
+    /// <summary>
+    /// 寻找两个棋格之间的最短寻路 distance
+    /// </summary>
+    /// <param name="from"></param>
+    /// <param name="to"></param>
+    /// <returns></returns>
+    public int FindDijkstraDistance(HexCellMesh from, HexCellMesh to) {
+        for (int i = 0; i < cells.Length; i++)
+        {
+            cells[i].Distance = int.MaxValue;
+        }
+
+        searchFrontier.Clear();
+
+        from.Distance = 0;
+
+        searchFrontier.Enqueue(from);
+
+        while (searchFrontier.Count > 0)
+        {
+            HexCellMesh current = searchFrontier.Dequeue();
+
+            if (current == to)
+            {
+                return current.Distance;
+            }
+
+            for (HexDirections d = HexDirections.NE; d <= HexDirections.NW; d++)
+            {
+                HexCellMesh neighbor = current.GetNeighbor(d);
+                if (neighbor == null)
+                    continue;
+
+                // 若未被处理过
+                if (neighbor.Distance == int.MaxValue)
+                {
+                    neighbor.Distance = current.Distance + 1;
+                    neighbor.PathFrom = current;
+                    neighbor.SearchHeuristic = neighbor.coordinates.DistanceTo(to.coordinates); //设定启发值 —— 初始启发值为直线距离
+                    //frontiers.Add(neighbor);
+                    searchFrontier.Enqueue(neighbor);
+                    //frontiers.Sort((x,y) => x.SearchPriority.CompareTo(y.SearchPriority));  //重排搜索优先级
+                }
+                // 若已处理过
+                else if (current.Distance + 1 < neighbor.Distance)
+                {
+                    int oldPriority = neighbor.SearchPriority;
+                    neighbor.Distance = current.Distance + 1;
+                    neighbor.PathFrom = current;
+                    searchFrontier.Change(neighbor, oldPriority);
+                }
+            }
+        }
+        return 0;
+
+    }
 
     /// <summary>
     /// 寻路算法
@@ -473,15 +548,6 @@ public class HexGridManager : MonoBehaviour
         sendMovementOrder(fromCell, toCell);
 
     }
-    /// <summary>
-    /// 使用自实现的优先队列对 SearchPath 里的 A* 算法做一个优化
-    /// </summary>
-    /// <param name="fromCell"></param>
-    /// <param name="toCell"></param>
-    /// <returns></returns>
-    IEnumerator SearchPathWithPriorityQueue(HexCellMesh fromCell, HexCellMesh toCell) {
-        yield return null;
-    }
 
     void ClearPathHexes() {
         foreach (HexCellMesh c in pathHexes) {
@@ -529,6 +595,13 @@ public class HexGridManager : MonoBehaviour
     }
     public void ChangeActionsNum(int num) {
         stateMachineUI.SetActionsNum(num);
+    }
+
+    /// <summary>
+    /// 通知 GameStateContext 减少行动点
+    /// </summary>
+    public void NortifyContextChangement() {
+        gameStateContext.OnEventAttackCompletion();
     }
 
 }

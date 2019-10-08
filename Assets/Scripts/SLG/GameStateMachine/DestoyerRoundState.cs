@@ -11,20 +11,16 @@ public class DestoyerRoundState : GameStates
         }
     }
 
-    private HexGridManager grid;
     private List<EnemyDemo> destroyers;
     private GameStateContext context;
 
-    private int actionLimits = ValueBoundary.ActionLimit;
-
-    public DestoyerRoundState(HexGridManager h, GameStateContext c) {
+    public DestoyerRoundState(GameStateContext c) {
         if (instance != null)
             return;
 
-        grid = h;
         instance = this;
         context = c;
-        destroyers = grid.cSpawner.GetEnemies();
+        destroyers = context.grid.cSpawner.GetEnemies();
 
         foreach (EnemyDemo e in destroyers) {
             e.SetEventCallback(OnEventMovementCompletion);
@@ -33,9 +29,9 @@ public class DestoyerRoundState : GameStates
 
     public override void onEntered()
     {
-        grid.TransferToDestroyerRound();
-        actionLimits = ValueBoundary.ActionLimit;
-        grid.ChangeActionsNum(actionLimits);
+        context.grid.TransferToDestroyerRound();
+        context.actionLimit = ValueBoundary.ActionLimit;
+        context.grid.ChangeActionsNum(context.actionLimit);
 
         Debug.Log("Destroyer Round Now !");
         foreach (EnemyDemo e in destroyers)
@@ -61,11 +57,11 @@ public class DestoyerRoundState : GameStates
 
     public void OnEventMovementCompletion()
     {
-        if (actionLimits > 0)
+        if (context.actionLimit > 0)
         {
-            actionLimits--;
-            grid.ChangeActionsNum(actionLimits);
-            if (actionLimits == 0)
+            context.actionLimit--;
+            context.grid.ChangeActionsNum(context.actionLimit);
+            if (context.actionLimit == 0)
                 changeState();
         }
     }

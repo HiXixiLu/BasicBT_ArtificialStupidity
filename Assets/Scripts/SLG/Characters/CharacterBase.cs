@@ -7,7 +7,7 @@ public class CharacterBase : MonoBehaviour
     protected Vector3 yOffset = new Vector3(0, 4, 0);    // 保持胶囊在地面上的偏移值
     protected Vector3 yDownOffset = new Vector3(0, 2, 0);   // 保持胶囊躺倒的偏移值
 
-    public delegate void EventCallback();   // 角色完成某个事件的回调
+    public delegate void EventCallback();   // 角色完成某个事件的委托
     protected EventCallback movementCompleteCallback;
     public void SetEventCallback(EventCallback e) {
         movementCompleteCallback = e;
@@ -21,6 +21,8 @@ public class CharacterBase : MonoBehaviour
     bool isDown = false; // 是否倒下
     int gunshot;
     int damage;
+
+    public delegate void AttackConditionCallback(bool permitted, int damage = 0);   // 是否可进攻的回调委托
 
     public int Gunshot
     {
@@ -162,7 +164,8 @@ public class CharacterBase : MonoBehaviour
 
     public virtual void beAttacked(int value)
     {
-
+        // TODO: 做动画
+        Debug.Log(this.Name + "受到" + value + "点伤害");
         if (Health > 0)
         {
             Health -= value;
@@ -173,17 +176,19 @@ public class CharacterBase : MonoBehaviour
             down();
         }
     }
+    public virtual void attack(CharacterBase target, int distance) { }
+    public virtual void attack(CharacterBase target, int distance, AttackConditionCallback conditionCallback) { }
 
-    public virtual void beRescued(int value)
-    {
-        if (IsDown)
-            return;
+    //public virtual void beRescued(int value)
+    //{
+    //    if (IsDown)
+    //        return;
 
-        Health = (Health + value) > ValueBoundary.HealthLimit ? ValueBoundary.HealthLimit : Health + value;
-    }
+    //    Health = (Health + value) > ValueBoundary.HealthLimit ? ValueBoundary.HealthLimit : Health + value;
+    //}
 }
 
 public enum characterInteraction {
     BE_ATTACKED,
-    BE_RESCUED
+    //BE_RESCUED
 }

@@ -11,23 +11,22 @@ public class CitizenRoundState : GameStates
         }
     }
 
-    private HexGridManager grid;
     private List<CitizenDemo> citizens;
     private GameStateContext context;
 
-    public CitizenRoundState(HexGridManager h, GameStateContext c) {
+    public CitizenRoundState(GameStateContext c) {
         if (instance != null)
             return;
 
-        grid = h;
         instance = this;
-        citizens = grid.cSpawner.GetCitizens();
         context = c;
+        citizens = context.grid.cSpawner.GetCitizens();
+       
     }
 
     public override void onEntered()
     {
-        grid.TransferToCitizenRound();
+        context.grid.TransferToCitizenRound();  //权宜处理
         Debug.Log("Citizen Round Now !");
 
         int movingUnits = 0;

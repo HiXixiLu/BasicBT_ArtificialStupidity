@@ -8,9 +8,11 @@ public class TearGas : Grenade
         RangeSetter = ValueBoundary.TearGasRange;
         AttackDistanceSetter = ValueBoundary.TearGasDistance;
         DamageSetter = ValueBoundary.TearGasDamage;
+
+        CapacitySetter = ValueBoundary.TearGasCapacity;
     }
 
-    public override void Attack(Vector3 from, Vector3 to)
+    public override void Attack(HexCellMesh from, HexCellMesh to)
     {
         throw new System.NotImplementedException();
     }

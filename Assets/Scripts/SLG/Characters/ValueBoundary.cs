@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-/* 用于各项基础棋子属性的数值
+/* 用于各项基础棋子属性的数值 —— 避免魔法数字
  */
 public static class ValueBoundary
 {
@@ -16,6 +16,8 @@ public static class ValueBoundary
     // 道具数值
     public const int MeleeRange = 1;
     public const int HealthRecovered = 40;
+    public const int IncendiaryCapacity = 2;    // 携带上限
+    public const int TearGasCapacity = 2;   //携带上限
 
     // 武器数值
     public const int PistalGunshot = 10;
@@ -27,8 +29,8 @@ public static class ValueBoundary
     public const int IncendiaryDamage = 30;
     public const int TearGasDamage = 20;
 
-    public const int PistolAmmos = 14;
-    public const int RiffleAmmos = 15;
+    public const int PistolAmmos = 7;   // 14
+    public const int RiffleAmmos = 10;
 
     public const int IncendiryDistance = 7;
     public const int TearGasDistance = 8;
